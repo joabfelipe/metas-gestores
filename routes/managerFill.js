@@ -73,6 +73,60 @@ router.get("/manager/dashboard", async (req, res) => {
 
   const businessUnit = req.query.businessUnit || "";
 
+  // Se não tem unidade selecionada, verifica se o gestor tem múltiplas unidades com metas
+  if (!businessUnit) {
+    const allGoals = await Goal.find({ managerId: manager._id, year, month });
+    
+    // Agrupa metas por unidade
+    const unitsMap = new Map();
+    
+    allGoals.forEach(goal => {
+      const unit = goal.businessUnit || "Padrão";
+      if (!unitsMap.has(unit)) {
+        unitsMap.set(unit, {
+          name: unit,
+          total: 0,
+          filled: 0,
+          pending: 0
+        });
+      }
+      
+      const stats = unitsMap.get(unit);
+      stats.total++;
+      if (goal.status === "PREENCHIDO") {
+        stats.filled++;
+      } else {
+        stats.pending++;
+      }
+    });
+
+    const unitsStatus = Array.from(unitsMap.values());
+
+    // Se tiver mais de uma unidade OU (uma unidade e a gente quer mostrar o card bonito mesmo assim),
+    // mas a lógica pedida é redirecionar se não precisar escolher.
+    // Vamos mostrar a seleção sempre que houver > 1 unidade.
+    // Se houver apenas 1, redireciona direto.
+    
+    if (unitsStatus.length === 1) {
+      return res.redirect(`/manager/dashboard?year=${year}&month=${month}&businessUnit=${encodeURIComponent(unitsStatus[0].name)}`);
+    }
+
+    if (unitsStatus.length > 1) {
+      return res.render("manager/select_unit", {
+        manager,
+        unitsStatus,
+        year,
+        month,
+        pageTitle: "Selecione a Unidade",
+        showSidebar: false,
+        breadcrumbs: [{ label: "Seleção de Unidade" }],
+        topbarMeta: "Gestor"
+      });
+    }
+    
+    // Se não tiver nenhuma meta, mostra a tela vazia padrão (vai cair no fluxo abaixo com goals vazio)
+  }
+
   const filter = { managerId: manager._id, year, month };
   if (businessUnit) {
       filter.businessUnit = businessUnit;
@@ -142,7 +196,21 @@ router.post("/manager/dashboard", async (req, res) => {
     );
   }
   
-  req.flash("success_msg", "Metas atualizadas com sucesso!");
+  // Verifica se existem outras unidades com metas pendentes
+  const pendingGoals = await Goal.countDocuments({
+    managerId: manager._id,
+    year,
+    month,
+    status: { $ne: "PREENCHIDO" },
+    businessUnit: { $ne: businessUnit } // Diferente da unidade atual
+  });
+
+  if (pendingGoals > 0) {
+    req.flash("success_msg", `Metas de ${businessUnit} salvas! Existem pendências em outras unidades.`);
+    return res.redirect(`/manager/dashboard?year=${year}&month=${month}`); // Redireciona para a seleção
+  }
+  
+  req.flash("success_msg", "Todas as metas foram atualizadas com sucesso!");
   res.redirect(`/manager/dashboard?year=${year}&month=${month}&businessUnit=${businessUnit}`);
 });
 
