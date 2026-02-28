@@ -1,0 +1,242 @@
+@config "../tailwind.config.js";
+@import "tailwindcss";
+
+:root {
+  --color-bg: 248 250 252;
+  --color-surface: 255 255 255;
+  --color-foreground: 15 23 42;
+  --color-muted: 100 116 139;
+  --color-border: 226 232 240;
+  --color-primary: 37 99 235;
+  --color-primary-foreground: 255 255 255;
+  --color-danger: 220 38 38;
+  --color-success: 16 185 129;
+  --color-warning: 245 158 11;
+  --radius: 0.875rem;
+}
+
+.dark {
+  --color-bg: 10 12 18;
+  --color-surface: 15 23 42;
+  --color-foreground: 226 232 240;
+  --color-muted: 148 163 184;
+  --color-border: 30 41 59;
+  --color-primary: 59 130 246;
+  --color-primary-foreground: 255 255 255;
+  --color-danger: 248 113 113;
+  --color-success: 52 211 153;
+  --color-warning: 251 191 36;
+}
+
+@layer base {
+  html {
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    background-color: rgb(var(--color-bg));
+    color: rgb(var(--color-foreground));
+  }
+
+  body {
+    min-height: 100vh;
+    background-color: rgb(var(--color-bg));
+    color: rgb(var(--color-foreground));
+  }
+
+  h1 {
+    @apply text-3xl font-semibold tracking-tight;
+  }
+
+  h2 {
+    @apply text-2xl font-semibold tracking-tight;
+  }
+
+  h3 {
+    @apply text-xl font-semibold tracking-tight;
+  }
+
+  p {
+    @apply text-base text-foreground/90;
+  }
+
+  a {
+    @apply text-primary hover:text-primary/80;
+  }
+}
+
+@layer components {
+  .app-shell {
+    @apply min-h-screen bg-background text-foreground;
+  }
+
+  .app-content {
+    @apply px-4 sm:px-6 lg:px-8 py-6;
+  }
+
+  .card {
+    @apply rounded-2xl border border-border bg-surface shadow-sm;
+  }
+
+  .card-padding {
+    @apply p-6;
+  }
+
+  .card-header {
+    @apply flex items-center justify-between gap-4 border-b border-border px-6 py-4;
+  }
+
+  .card-title {
+    @apply text-lg font-semibold;
+  }
+
+  .card-body {
+    @apply px-6 py-5;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40;
+  }
+
+  .btn-secondary {
+    @apply border border-border bg-surface text-foreground hover:bg-background;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent text-foreground hover:bg-background;
+  }
+
+  .btn-danger {
+    @apply bg-danger text-white hover:bg-danger/90;
+  }
+
+  .btn-xs {
+    @apply px-2.5 py-1 text-xs;
+  }
+
+  .field {
+    @apply flex flex-col gap-2;
+  }
+
+  .field-label {
+    @apply text-sm font-medium text-foreground;
+  }
+
+  .field-hint {
+    @apply text-xs text-muted;
+  }
+
+  .input,
+  .select,
+  .textarea {
+    @apply w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-foreground shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40;
+  }
+
+  .textarea {
+    @apply min-h-[96px];
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide;
+  }
+
+  .badge-success {
+    @apply bg-success/15 text-success;
+  }
+
+  .badge-warning {
+    @apply bg-warning/15 text-warning;
+  }
+
+  .badge-muted {
+    @apply bg-background text-muted;
+  }
+
+  .alert {
+    @apply flex items-start gap-3 rounded-2xl border border-border bg-surface px-4 py-3;
+  }
+
+  .alert-success {
+    @apply border-success/40 bg-success/10 text-success;
+  }
+
+  .alert-danger {
+    @apply border-danger/40 bg-danger/10 text-danger;
+  }
+
+  .alert-warning {
+    @apply border-warning/40 bg-warning/10 text-warning;
+  }
+
+  .table-wrap {
+    @apply overflow-x-auto rounded-2xl border border-border bg-surface;
+  }
+
+  .table {
+    @apply w-full text-left text-sm;
+  }
+
+  .table thead {
+    @apply bg-background text-muted;
+  }
+
+  .table th {
+    @apply px-4 py-3 text-xs font-semibold uppercase tracking-widest;
+  }
+
+  .table td {
+    @apply px-4 py-3 text-sm text-foreground;
+  }
+
+  .table tbody tr {
+    @apply border-t border-border transition hover:bg-background/70;
+  }
+
+  .empty-state {
+    @apply flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-surface px-6 py-10 text-center;
+  }
+
+  .sidebar-link {
+    @apply flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-muted transition hover:bg-background hover:text-foreground;
+  }
+
+  .sidebar-link-active {
+    @apply bg-background text-foreground;
+  }
+
+  .topbar {
+    @apply sticky top-0 z-20 border-b border-border bg-surface/80 backdrop-blur;
+  }
+
+  .breadcrumb {
+    @apply flex items-center gap-2 text-sm text-muted;
+  }
+}
+
+@media (max-width: 768px) {
+  .table-card thead {
+    display: none;
+  }
+
+  .table-card tr {
+    display: grid;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-top: 1px solid rgb(var(--color-border));
+  }
+
+  .table-card td {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0;
+    border: none;
+  }
+
+  .table-card td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: rgb(var(--color-muted));
+  }
+}

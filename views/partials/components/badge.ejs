@@ -1,0 +1,12 @@
+<%
+  const _variant = (typeof variant !== 'undefined' && variant) ? variant : 'default';
+  const _label = (typeof label !== 'undefined' && label) ? label : '';
+  
+  let variantClasses = "border-transparent bg-primary text-primary-foreground hover:bg-primary/80";
+  if (_variant === 'secondary' || _variant === 'badge-muted') variantClasses = "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80";
+  if (_variant === 'destructive') variantClasses = "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80";
+  if (_variant === 'outline') variantClasses = "text-foreground";
+%>
+<div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 <%= variantClasses %>">
+  <%= _label %>
+</div>

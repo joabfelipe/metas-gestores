@@ -1,0 +1,30 @@
+{
+  "name": "metas-gestores",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "dev": "npx nodemon server.js",
+    "dev:css": "npx tailwindcss -i ./src/input.css -o ./public/css/app.css --watch",
+    "build:css": "npx tailwindcss -i ./src/input.css -o ./public/css/app.css --minify",
+    "build": "npm run build:css",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "connect-flash": "^0.1.1",
+    "dotenv": "^17.3.1",
+    "ejs": "^4.0.1",
+    "express": "^5.2.1",
+    "express-ejs-layouts": "^2.5.1",
+    "express-session": "^1.19.0",
+    "mongoose": "^9.2.2",
+    "nodemailer": "^8.0.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.2.1",
+    "autoprefixer": "^10.4.21",
+    "nodemon": "^3.1.14",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^4.0.6"
+  }
+}

@@ -1,0 +1,18 @@
+<section class="mx-auto max-w-2xl">
+  <div class="card text-center">
+    <div class="card-body space-y-4">
+      <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-success/15 text-2xl text-success">✅</div>
+      <div>
+        <h2 class="text-2xl font-semibold">Recebido</h2>
+        <p class="text-sm text-muted">Obrigado, <span class="font-semibold text-foreground"><%= manager.name %></span>.</p>
+      </div>
+      <div class="rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground">
+        As informações de <span class="font-semibold"><%= month %>/<%= year %></span>
+        <% if (locals.businessUnit) { %>
+             para a unidade <span class="font-semibold text-primary"><%= businessUnit %></span>
+        <% } %>
+        foram registradas com sucesso.
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,19 @@
+<%
+  const _className = (typeof className !== 'undefined' && className) ? className : '';
+  const _title = (typeof title !== 'undefined' && title) ? title : '';
+  const _action = (typeof action !== 'undefined' && action) ? action : '';
+  const _body = (typeof body !== 'undefined' && body) ? body : '';
+%>
+<div class="rounded-2xl border border-border bg-surface shadow-sm <%= _className %>">
+  <% if (_title) { %>
+    <div class="flex items-center justify-between p-6">
+      <h3 class="font-semibold leading-none tracking-tight"><%= _title %></h3>
+      <% if (_action) { %>
+        <div><%- _action %></div>
+      <% } %>
+    </div>
+  <% } %>
+  <div class="p-6 pt-0">
+    <%- _body %>
+  </div>
+</div>

@@ -1,0 +1,20 @@
+<%
+  const _label = (typeof label !== 'undefined' && label) ? label : 'Página 1 de 1';
+  const _hasPrev = (typeof hasPrev !== 'undefined' && hasPrev) ? true : false;
+  const _hasNext = (typeof hasNext !== 'undefined' && hasNext) ? true : false;
+  const _prevUrl = (typeof prevUrl !== 'undefined' && prevUrl) ? prevUrl : '#';
+  const _nextUrl = (typeof nextUrl !== 'undefined' && nextUrl) ? nextUrl : '#';
+%>
+<div class="flex items-center justify-between gap-3 text-sm">
+  <% if (_hasPrev) { %>
+    <a href="<%= _prevUrl %>" class="inline-flex items-center justify-center rounded-lg border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground">Anterior</a>
+  <% } else { %>
+    <button class="inline-flex items-center justify-center rounded-lg border border-input bg-background px-3 py-2 text-sm font-medium opacity-50 cursor-not-allowed" disabled>Anterior</button>
+  <% } %>
+  <div class="text-muted-foreground"><%= _label %></div>
+  <% if (_hasNext) { %>
+    <a href="<%= _nextUrl %>" class="inline-flex items-center justify-center rounded-lg border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground">Próxima</a>
+  <% } else { %>
+    <button class="inline-flex items-center justify-center rounded-lg border border-input bg-background px-3 py-2 text-sm font-medium opacity-50 cursor-not-allowed" disabled>Próxima</button>
+  <% } %>
+</div>

@@ -1,0 +1,26 @@
+<%
+  const _wrapperClass = (typeof wrapperClass !== 'undefined' && wrapperClass) ? wrapperClass : '';
+  const _label = (typeof label !== 'undefined' && label) ? label : '';
+  const _name = (typeof name !== 'undefined' && name) ? name : '';
+  const _id = (typeof id !== 'undefined' && id) ? id : _name;
+  const _selectClass = (typeof selectClass !== 'undefined' && selectClass) ? selectClass : '';
+  const _required = (typeof required !== 'undefined' && required) ? true : false;
+  const _hint = (typeof hint !== 'undefined' && hint) ? hint : '';
+  const _options = (typeof options !== 'undefined' && options) ? options : '';
+%>
+<div class="<%= _wrapperClass %>">
+  <% if (_label) { %>
+    <label class="block text-sm font-medium mb-1 text-foreground" for="<%= _id %>"><%= _label %></label>
+  <% } %>
+  <select 
+    id="<%= _id %>" 
+    name="<%= _name %>" 
+    class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 transition-colors <%= _selectClass %>" 
+    <%= _required ? 'required' : '' %>
+  >
+    <%- _options %>
+  </select>
+  <% if (_hint) { %>
+    <p class="text-xs text-muted mt-1"><%= _hint %></p>
+  <% } %>
+</div>

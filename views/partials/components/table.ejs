@@ -1,0 +1,18 @@
+<%
+  const _wrapperClass = (typeof wrapperClass !== 'undefined' && wrapperClass) ? wrapperClass : '';
+  const _tableClass = (typeof tableClass !== 'undefined' && tableClass) ? tableClass : '';
+  const _headers = (typeof headers !== 'undefined' && headers) ? headers : '';
+  const _rows = (typeof rows !== 'undefined' && rows) ? rows : '';
+%>
+<div class="relative w-full overflow-auto <%= _wrapperClass %>">
+  <table class="w-full caption-bottom text-sm <%= _tableClass %>">
+    <thead class="[&_tr]:border-b">
+      <tr class="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+        <%- _headers %>
+      </tr>
+    </thead>
+    <tbody class="[&_tr:last-child]:border-0">
+      <%- _rows %>
+    </tbody>
+  </table>
+</div>

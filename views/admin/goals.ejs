@@ -1,0 +1,300 @@
+<section class="space-y-6">
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <h2 class="text-xl font-semibold">Metas</h2>
+        <p class="text-sm text-muted">Filtre e acompanhe o desempenho dos gestores.</p>
+      </div>
+      <%- include("../partials/components/button", { href: "/admin/managers", label: "Gestores", variant: "btn-secondary", size: "btn-xs" }) %>
+    </div>
+    <div class="card-body">
+      <form method="get" action="/admin/goals" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 items-end">
+        <div class="field">
+          <label class="field-label">Período</label>
+          <input type="month" name="period" value="<%= year %>-<%= String(month).padStart(2, '0') %>" class="input" required />
+        </div>
+        <div class="field">
+          <label class="field-label">Gestor</label>
+          <select name="managerId" class="select">
+            <option value="">Todos</option>
+            <% managers.forEach(m => { %>
+              <option value="<%= m._id %>" <%= String(managerId)===String(m._id) ? "selected" : "" %>>
+                <%= m.department %> - <%= m.name %>
+              </option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label">Unidade (Local)</label>
+          <select name="businessUnit" class="select">
+            <option value="">Todas</option>
+            <% availableUnits.forEach(u => { %>
+              <option value="<%= u %>" <%= String(businessUnit)===String(u) ? "selected" : "" %>>
+                <%= u %>
+              </option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="flex items-end">
+          <%- include("../partials/components/button", { type: "submit", label: "Filtrar", variant: "btn-primary" }) %>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header flex justify-between items-center">
+      <div>
+        <h3 class="card-title">Criar meta</h3>
+        <p class="text-sm text-muted">Defina metas com base no período e gestor.</p>
+      </div>
+      <div class="flex gap-2">
+        <% if (managerId && businessUnit) { %>
+            <% const currentManager = managers.find(m => String(m._id) === String(managerId)); %>
+            <% if (currentManager && currentManager.units && currentManager.units.length > 1) { %>
+                <form method="post" action="/admin/goals/copy-unit" class="flex gap-2 items-center" onsubmit="return confirm('Deseja copiar as metas da unidade selecionada para a atual?');">
+                    <input type="hidden" name="period" value="<%= year %>-<%= String(month).padStart(2, '0') %>">
+                    <input type="hidden" name="managerId" value="<%= managerId %>">
+                    <input type="hidden" name="targetUnit" value="<%= businessUnit %>">
+                    <select name="sourceUnit" class="select select-xs w-auto" required>
+                        <option value="">Copiar de...</option>
+                        <% currentManager.units.filter(u => u !== businessUnit).forEach(u => { %>
+                            <option value="<%= u %>"><%= u %></option>
+                        <% }) %>
+                    </select>
+                    <button type="submit" class="btn btn-secondary btn-xs">Copiar</button>
+                </form>
+            <% } %>
+        <% } %>
+        <form method="post" action="/admin/goals/replicate" onsubmit="return confirm('Isso irá copiar as metas do mês anterior para o mês atual (apenas as que ainda não existem). Continuar?');">
+            <input type="hidden" name="period" value="<%= year %>-<%= String(month).padStart(2, '0') %>">
+            <input type="hidden" name="managerId" value="<%= managerId %>">
+            <%- include("../partials/components/button", { type: "submit", label: "Replicar mês anterior", variant: "btn-secondary", size: "btn-xs" }) %>
+        </form>
+      </div>
+    </div>
+    <div class="card-body">
+      <form method="post" action="/admin/goals" class="grid gap-4 lg:grid-cols-6 items-end">
+        <div class="field lg:col-span-2">
+          <label class="field-label">Período</label>
+          <input type="month" name="period" value="<%= year %>-<%= String(month).padStart(2, '0') %>" class="input" required />
+        </div>
+        <div class="field lg:col-span-2">
+          <label class="field-label">Gestor</label>
+          <select name="managerId" id="managerSelect" class="select" required onchange="updateUnits()">
+            <option value="" data-units="">Selecione...</option>
+            <% managers.forEach(m => { %>
+              <option value="<%= m._id %>" data-units="<%= m.units ? m.units.join(',') : '' %>" <%= String(managerId)===String(m._id) ? "selected" : "" %>>
+                <%= m.department %> - <%= m.name %>
+              </option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="field lg:col-span-2">
+            <label class="field-label">Unidade (Local)</label>
+            <input list="units-datalist" name="businessUnit" id="businessUnitInput" class="input" placeholder="Ex: Centro" />
+            <datalist id="units-datalist"></datalist>
+        </div>
+        <div class="field lg:col-span-2">
+          <label class="field-label">Título da meta</label>
+          <input name="title" placeholder="Ex.: Crescer faturamento" class="input" required />
+        </div>
+        <div class="field">
+          <label class="field-label">Valor</label>
+          <input name="targetValue" placeholder="0" class="input" required />
+        </div>
+        <div class="field">
+          <label class="field-label">Unidade</label>
+          <select name="unit" class="select" required>
+            <option value="%">%</option>
+            <option value="R$">R$</option>
+            <option value="un">un</option>
+            <option value="pts">pts</option>
+          </select>
+        </div>
+        <div class="flex items-end">
+          <%- include("../partials/components/button", { type: "submit", label: "Cadastrar", variant: "btn-primary" }) %>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header flex justify-between items-center">
+      <div>
+        <h3 class="card-title">Metas cadastradas</h3>
+        <p class="text-sm text-muted">Atualize rapidamente dados e plano de ação.</p>
+      </div>
+      <% if (goals.length > 0) { %>
+        <div class="flex gap-2">
+            <button onclick="saveAllGoals()" class="btn btn-primary btn-xs">Salvar Alterações</button>
+            <form action="/admin/goals/delete-all" method="post" onsubmit="return confirm('ATENÇÃO: Isso apagará TODAS as metas listadas abaixo.\n\nTem certeza absoluta?');">
+                <input type="hidden" name="period" value="<%= year %>-<%= String(month).padStart(2, '0') %>">
+                <input type="hidden" name="managerId" value="<%= managerId || '' %>">
+                <%- include("../partials/components/button", { type: "submit", label: "Apagar todas as metas", variant: "btn-danger", size: "btn-xs" }) %>
+            </form>
+        </div>
+      <% } %>
+    </div>
+    <div class="card-body">
+      <% if (goals.length === 0) { %>
+        <div class="empty-state">
+          <div class="text-4xl">🎯</div>
+          <div class="text-sm font-semibold">Nenhuma meta encontrada</div>
+          <div class="text-sm text-muted">Crie uma nova meta para começar.</div>
+        </div>
+      <% } else { %>
+        <div class="table-wrap" style="overflow-x: auto;">
+          <table class="table table-card" style="min-width: 100%;">
+            <thead>
+              <tr>
+                <th>Gestor</th>
+                <th>Depto</th>
+                <th>Unidade</th>
+                <th>Meta</th>
+                <th>Alvo</th>
+                <th>Unid.</th>
+                <th>Atingido</th>
+                <th>Status</th>
+                <th>Plano de Ação</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% goals.forEach(g => { %>
+                <tr data-id="<%= g._id %>">
+                  <td style="display:none">
+                    <form id="form-<%= g._id %>" method="post" action="/admin/goals/<%= g._id %>/update"></form>
+                  </td>
+                  <td data-label="Gestor"><%= g.managerId ? g.managerId.name : '?' %></td>
+                  <td data-label="Depto"><%= g.managerId ? g.managerId.department : '?' %></td>
+                  <td data-label="Unidade">
+                    <% if (g.managerId && g.managerId.units && g.managerId.units.length > 0) { %>
+                        <select name="businessUnit" form="form-<%= g._id %>" class="select w-32">
+                            <option value="">-</option>
+                            <% g.managerId.units.forEach(u => { %>
+                                <option value="<%= u %>" <%= g.businessUnit === u ? 'selected' : '' %>><%= u %></option>
+                            <% }) %>
+                        </select>
+                    <% } else { %>
+                        <input name="businessUnit" value="<%= g.businessUnit || '' %>" form="form-<%= g._id %>" class="input w-32" placeholder="-" />
+                    <% } %>
+                  </td>
+                  <td data-label="Meta">
+                    <input name="title" value="<%= g.title %>" form="form-<%= g._id %>" class="input min-w-[300px]" required />
+                  </td>
+                  <td data-label="Alvo">
+                    <input type="number" step="0.01" name="targetValue" value="<%= g.targetValue %>" form="form-<%= g._id %>" class="input w-20" required />
+                  </td>
+                  <td data-label="Unid.">
+                    <select name="unit" form="form-<%= g._id %>" class="select w-20">
+                      <option value="%" <%= g.unit === '%' ? 'selected' : '' %>>%</option>
+                      <option value="R$" <%= g.unit === 'R$' ? 'selected' : '' %>>R$</option>
+                      <option value="un" <%= g.unit === 'un' ? 'selected' : '' %>>un</option>
+                      <option value="pts" <%= g.unit === 'pts' ? 'selected' : '' %>>pts</option>
+                    </select>
+                  </td>
+                  <td data-label="Atingido">
+                    <input type="number" step="0.01" name="achievedValue" value="<%= g.achievedValue %>" form="form-<%= g._id %>" class="input w-20" placeholder="-" />
+                  </td>
+                  <td data-label="Status">
+                    <%- include("../partials/components/badge", { label: g.status, variant: g.status === 'PREENCHIDO' ? 'badge-success' : 'badge-warning' }) %>
+                  </td>
+                  <td data-label="Plano de Ação">
+                    <textarea name="actionPlan" form="form-<%= g._id %>" rows="1" class="textarea min-w-[150px]"><%= g.actionPlan || "" %></textarea>
+                  </td>
+                  <td data-label="Ações">
+                    <div class="flex flex-wrap gap-2">
+                      <button type="submit" form="form-<%= g._id %>" class="btn btn-secondary btn-xs">Salvar</button>
+                      <form action="/admin/goals/<%= g._id %>/delete" method="post" onsubmit="return confirm('Excluir?');">
+                        <%- include("../partials/components/button", { type: "submit", label: "Excluir", variant: "btn-danger", size: "btn-xs" }) %>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </div>
+<script>
+  function updateUnits() {
+    const select = document.getElementById('managerSelect');
+    const selectedOption = select.options[select.selectedIndex];
+    const unitsStr = selectedOption.getAttribute('data-units') || "";
+    const units = unitsStr.split(',').filter(u => u.trim() !== "");
+    
+    const dataList = document.getElementById('units-datalist');
+    dataList.innerHTML = "";
+    
+    units.forEach(unit => {
+      const option = document.createElement('option');
+      option.value = unit;
+      dataList.appendChild(option);
+    });
+
+    // Se houver apenas uma unidade, preenche automaticamente
+    const unitInput = document.getElementById('businessUnitInput');
+    if (units.length === 1) {
+        unitInput.value = units[0];
+    } else {
+        unitInput.value = ""; // Limpa se mudar de gestor
+    }
+  }
+  
+  // Roda ao carregar se já tiver gestor selecionado
+  document.addEventListener("DOMContentLoaded", () => {
+      if(document.getElementById('managerSelect').value) {
+          updateUnits();
+      }
+  });
+
+  async function saveAllGoals() {
+    if(!confirm("Tem certeza que deseja salvar todas as alterações visíveis?")) return;
+    
+    const updates = [];
+    const rows = document.querySelectorAll('tbody tr[data-id]');
+    
+    rows.forEach(row => {
+        const id = row.getAttribute('data-id');
+        const title = row.querySelector('[name="title"]').value;
+        const targetValue = row.querySelector('[name="targetValue"]').value;
+        const unit = row.querySelector('[name="unit"]').value;
+        const businessUnitElement = row.querySelector('[name="businessUnit"]');
+        const businessUnit = businessUnitElement ? businessUnitElement.value : "";
+        const achievedValue = row.querySelector('[name="achievedValue"]').value;
+        const actionPlan = row.querySelector('[name="actionPlan"]').value;
+
+        updates.push({
+            id,
+            title,
+            targetValue,
+            unit,
+            businessUnit,
+            achievedValue,
+            actionPlan
+        });
+    });
+
+    try {
+        const res = await fetch('/admin/goals/batch-update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ updates })
+        });
+
+        if (res.ok) {
+            alert('Metas atualizadas com sucesso!');
+            window.location.reload();
+        } else {
+            alert('Erro ao atualizar metas. Tente novamente.');
+        }
+    } catch (error) {
+        console.error(error);
+        alert('Erro de conexão ao salvar metas.');
+    }
+  }
+</script>
+</section>

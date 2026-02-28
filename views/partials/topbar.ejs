@@ -1,0 +1,41 @@
+<header class="topbar">
+  <div class="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+    <div class="flex items-center gap-3">
+      <% if (showSidebar) { %>
+        <button id="sidebarToggle" class="btn btn-secondary btn-xs lg:hidden" type="button">Menu</button>
+      <% } %>
+      <div>
+        <% if (breadcrumbs && breadcrumbs.length) { %>
+          <nav class="breadcrumb">
+            <% breadcrumbs.forEach((crumb, index) => { %>
+              <% if (crumb.href) { %>
+                <a href="<%= crumb.href %>"><%= crumb.label %></a>
+              <% } else { %>
+                <span class="text-foreground"><%= crumb.label %></span>
+              <% } %>
+              <% if (index < breadcrumbs.length - 1) { %>
+                <span>/</span>
+              <% } %>
+            <% }) %>
+          </nav>
+        <% } %>
+        <h1 class="text-xl font-semibold"><%= pageTitle %></h1>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <% if (topbarActions) { %>
+        <%- topbarActions %>
+      <% } %>
+      <% if (typeof user !== 'undefined' && user) { %>
+        <div class="flex items-center gap-2">
+           <span class="text-sm text-gray-600 hidden sm:inline"><%= user.name %></span>
+           <a href="/logout" class="btn btn-secondary btn-xs text-red-600">Sair</a>
+        </div>
+      <% } %>
+      <button id="themeToggle" class="btn btn-secondary btn-xs" type="button">Tema</button>
+      <div class="hidden items-center gap-2 rounded-full border border-border px-3 py-1 text-xs text-muted sm:flex">
+        <span><%= topbarMeta || "Admin" %></span>
+      </div>
+    </div>
+  </div>
+</header>
