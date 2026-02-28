@@ -2,7 +2,14 @@
   <div class="card">
     <div class="card-header">
       <div>
-        <h2 class="text-xl font-semibold">Preenchimento de metas</h2>
+        <h2 class="text-xl font-semibold">
+          Preenchimento de metas 
+          <% if (locals.businessUnit) { %>
+            - <%= businessUnit %>
+          <% } else if (manager.units && manager.units.length > 0) { %>
+            - <%= manager.units.join(", ") %>
+          <% } %>
+        </h2>
         <p class="text-sm text-muted">Complete os resultados do período informado.</p>
       </div>
       <div class="flex gap-2">
