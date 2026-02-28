@@ -9,7 +9,7 @@ const router = express.Router();
 
 // Lista e cria gestores
 router.get("/admin/managers", async (req, res) => {
-  const managers = await Manager.find().sort({ department: 1, name: 1 });
+  const managers = await Manager.find().sort({ "departments.0": 1, name: 1 });
   res.render("admin/managers", {
     managers,
     pageTitle: "Gestores",
@@ -28,8 +28,9 @@ router.post("/admin/managers", async (req, res) => {
   const accessToken = crypto.randomBytes(24).toString("hex");
   // Converte "Unidade A, Unidade B" para ["Unidade A", "Unidade B"]
   const units = unit ? unit.split(',').map(u => u.trim()).filter(Boolean) : [];
+  const departments = department ? department.split(',').map(d => d.trim()).filter(Boolean) : [];
   
-  await Manager.create({ name, email, department, units, accessToken });
+  await Manager.create({ name, email, departments, units, accessToken });
   res.redirect("/admin/managers");
 });
 
@@ -38,11 +39,12 @@ router.post("/admin/managers/:id/update", async (req, res) => {
   const { name, email, department, unit } = req.body;
   
   const units = unit ? unit.split(',').map(u => u.trim()).filter(Boolean) : [];
+  const departments = department ? department.split(',').map(d => d.trim()).filter(Boolean) : [];
 
   await Manager.findByIdAndUpdate(id, {
     name,
     email,
-    department,
+    departments,
     units
   });
   
@@ -76,34 +78,44 @@ router.get("/admin/goals", async (req, res) => {
 
   const managerId = req.query.managerId || "";
   const businessUnit = req.query.businessUnit || "";
+  const department = req.query.department || "";
 
-  const managers = await Manager.find().sort({ department: 1, name: 1 });
+  const managers = await Manager.find().sort({ "departments.0": 1, name: 1 });
   
   // Extrai todas as unidades cadastradas nos gestores
   const allUnits = new Set();
+  const allDepartments = new Set();
   managers.forEach(m => {
     if (m.units && Array.isArray(m.units)) {
       m.units.forEach(u => allUnits.add(u));
     }
+    if (m.departments && Array.isArray(m.departments)) {
+      m.departments.forEach(d => allDepartments.add(d));
+    }
+    if (m.department) allDepartments.add(m.department);
   });
   const availableUnits = Array.from(allUnits).sort();
+  const availableDepartments = Array.from(allDepartments).sort();
 
   const filter = { year, month };
   if (managerId) filter.managerId = managerId;
   if (businessUnit) filter.businessUnit = businessUnit;
+  if (department) filter.department = department;
 
   const goals = await Goal.find(filter)
     .populate("managerId")
-    .sort({ "managerId.department": 1, "managerId.name": 1, title: 1 });
+    .sort({ "managerId.departments.0": 1, "managerId.name": 1, title: 1 });
 
   res.render("admin/goals", {
     managers,
     availableUnits,
+    availableDepartments,
     goals,
     year,
     month,
     managerId,
     businessUnit,
+    department,
     pageTitle: "Metas",
     currentPath: "/admin/goals",
     showSidebar: true,
@@ -116,7 +128,7 @@ router.get("/admin/goals", async (req, res) => {
 });
 
 router.post("/admin/goals", async (req, res) => {
-  const { managerId, title, description, targetValue, unit, year, month } = req.body;
+  const { managerId, title, description, targetValue, unit, year, month, department } = req.body;
   
   await Goal.create({
     managerId,
@@ -124,6 +136,7 @@ router.post("/admin/goals", async (req, res) => {
     description,
     targetValue,
     businessUnit: unit,
+    department: department || "",
     year,
     month,
     achievedValue: null,
@@ -137,13 +150,14 @@ router.post("/admin/goals", async (req, res) => {
   if (month) params.append("month", month);
   if (managerId) params.append("managerId", managerId);
   if (unit) params.append("businessUnit", unit);
+  if (department) params.append("department", department);
 
   res.redirect(`/admin/goals?${params.toString()}`);
 });
 
 router.post("/admin/goals/:id/update", async (req, res) => {
   const { id } = req.params;
-  const { title, targetValue, unit, achievedValue, businessUnit, actionPlan } = req.body;
+  const { title, targetValue, unit, achievedValue, businessUnit, actionPlan, department } = req.body;
 
   await Goal.findByIdAndUpdate(id, {
     title,
@@ -151,6 +165,7 @@ router.post("/admin/goals/:id/update", async (req, res) => {
     unit,
     achievedValue: achievedValue === "" ? null : Number(achievedValue),
     businessUnit,
+    department,
     actionPlan,
     status: achievedValue ? "PREENCHIDO" : "PENDENTE" // Atualiza status se tiver valor
   });
@@ -172,6 +187,7 @@ router.post("/admin/goals/batch-update", express.json(), async (req, res) => {
                 targetValue: update.targetValue,
                 unit: update.unit,
                 businessUnit: update.businessUnit,
+                department: update.department,
                 achievedValue: update.achievedValue === "" ? null : Number(update.achievedValue),
                 actionPlan: update.actionPlan,
                 status: update.achievedValue ? "PREENCHIDO" : "PENDENTE"
@@ -220,6 +236,7 @@ router.post("/admin/goals/replicate", async (req, res) => {
                 targetValue: goal.targetValue,
                 unit: goal.unit,
                 businessUnit: goal.businessUnit,
+                department: goal.department,
                 year,
                 month,
                 achievedValue: null,
@@ -263,6 +280,7 @@ router.post("/admin/goals/copy-unit", async (req, res) => {
                 targetValue: goal.targetValue,
                 unit: goal.unit,
                 businessUnit: targetUnit,
+                department: goal.department,
                 year,
                 month,
                 achievedValue: null,

@@ -19,7 +19,18 @@
             <option value="">Todos</option>
             <% managers.forEach(m => { %>
               <option value="<%= m._id %>" <%= String(managerId)===String(m._id) ? "selected" : "" %>>
-                <%= m.department %> - <%= m.name %>
+                <%= m.departments && m.departments.length ? m.departments.join(', ') : m.department %> - <%= m.name %>
+              </option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label">Departamento</label>
+          <select name="department" class="select">
+            <option value="">Todos</option>
+            <% availableDepartments.forEach(d => { %>
+              <option value="<%= d %>" <%= String(department)===String(d) ? "selected" : "" %>>
+                <%= d %>
               </option>
             <% }) %>
           </select>
@@ -81,14 +92,23 @@
         </div>
         <div class="field lg:col-span-2">
           <label class="field-label">Gestor</label>
-          <select name="managerId" id="managerSelect" class="select" required onchange="updateUnits()">
-            <option value="" data-units="">Selecione...</option>
+          <select name="managerId" id="managerSelect" class="select" required onchange="updateManagerOptions()">
+            <option value="" data-units="" data-departments="">Selecione...</option>
             <% managers.forEach(m => { %>
-              <option value="<%= m._id %>" data-units="<%= m.units ? m.units.join(',') : '' %>" <%= String(managerId)===String(m._id) ? "selected" : "" %>>
-                <%= m.department %> - <%= m.name %>
+              <option value="<%= m._id %>" 
+                data-units="<%= m.units ? m.units.join(',') : '' %>" 
+                data-departments="<%= m.departments ? m.departments.join(',') : (m.department || '') %>"
+                <%= String(managerId)===String(m._id) ? "selected" : "" %>>
+                <%= m.name %>
               </option>
             <% }) %>
           </select>
+        </div>
+        <div class="field lg:col-span-2">
+            <label class="field-label">Departamento</label>
+            <select name="department" id="departmentSelect" class="select" required>
+                <option value="">Selecione...</option>
+            </select>
         </div>
         <div class="field lg:col-span-2">
             <label class="field-label">Unidade (Local)</label>
@@ -167,7 +187,18 @@
                     <form id="form-<%= g._id %>" method="post" action="/admin/goals/<%= g._id %>/update"></form>
                   </td>
                   <td data-label="Gestor"><%= g.managerId ? g.managerId.name : '?' %></td>
-                  <td data-label="Depto"><%= g.managerId ? g.managerId.department : '?' %></td>
+                  <td data-label="Depto">
+                    <% if (g.managerId && g.managerId.departments && g.managerId.departments.length > 0) { %>
+                        <select name="department" form="form-<%= g._id %>" class="select w-32">
+                            <option value="">-</option>
+                            <% g.managerId.departments.forEach(d => { %>
+                                <option value="<%= d %>" <%= g.department === d ? 'selected' : '' %>><%= d %></option>
+                            <% }) %>
+                        </select>
+                    <% } else { %>
+                        <input name="department" value="<%= g.department || (g.managerId ? g.managerId.department : '') %>" form="form-<%= g._id %>" class="input w-32" readonly />
+                    <% } %>
+                  </td>
                   <td data-label="Unidade">
                     <% if (g.managerId && g.managerId.units && g.managerId.units.length > 0) { %>
                         <select name="businessUnit" form="form-<%= g._id %>" class="select w-32">
@@ -220,9 +251,11 @@
     </div>
   </div>
 <script>
-  function updateUnits() {
+  function updateManagerOptions() {
     const select = document.getElementById('managerSelect');
     const selectedOption = select.options[select.selectedIndex];
+    
+    // Units
     const unitsStr = selectedOption.getAttribute('data-units') || "";
     const units = unitsStr.split(',').filter(u => u.trim() !== "");
     
@@ -235,19 +268,36 @@
       dataList.appendChild(option);
     });
 
-    // Se houver apenas uma unidade, preenche automaticamente
     const unitInput = document.getElementById('businessUnitInput');
     if (units.length === 1) {
         unitInput.value = units[0];
     } else {
-        unitInput.value = ""; // Limpa se mudar de gestor
+        unitInput.value = ""; 
+    }
+
+    // Departments
+    const deptsStr = selectedOption.getAttribute('data-departments') || "";
+    const depts = deptsStr.split(',').filter(d => d.trim() !== "");
+    
+    const deptSelect = document.getElementById('departmentSelect');
+    deptSelect.innerHTML = '<option value="">Selecione...</option>';
+    
+    depts.forEach(dept => {
+      const option = document.createElement('option');
+      option.value = dept;
+      option.text = dept;
+      deptSelect.appendChild(option);
+    });
+
+    if (depts.length === 1) {
+        deptSelect.value = depts[0];
     }
   }
   
   // Roda ao carregar se já tiver gestor selecionado
   document.addEventListener("DOMContentLoaded", () => {
       if(document.getElementById('managerSelect').value) {
-          updateUnits();
+          updateManagerOptions();
       }
   });
 
@@ -262,8 +312,13 @@
         const title = row.querySelector('[name="title"]').value;
         const targetValue = row.querySelector('[name="targetValue"]').value;
         const unit = row.querySelector('[name="unit"]').value;
+        
         const businessUnitElement = row.querySelector('[name="businessUnit"]');
         const businessUnit = businessUnitElement ? businessUnitElement.value : "";
+        
+        const departmentElement = row.querySelector('[name="department"]');
+        const department = departmentElement ? departmentElement.value : "";
+
         const achievedValue = row.querySelector('[name="achievedValue"]').value;
         const actionPlan = row.querySelector('[name="actionPlan"]').value;
 
@@ -273,6 +328,7 @@
             targetValue,
             unit,
             businessUnit,
+            department,
             achievedValue,
             actionPlan
         });

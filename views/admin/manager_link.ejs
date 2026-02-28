@@ -11,7 +11,7 @@
       <div class="grid gap-3 rounded-xl border border-border bg-muted/30 p-4 text-sm">
         <div>
           <div class="text-muted">Gestor</div>
-          <div class="font-semibold"><%= manager.name %> <span class="text-muted">(<%= manager.department %>)</span></div>
+          <div class="font-semibold"><%= manager.name %> <span class="text-muted">(<%= manager.departments && manager.departments.length ? manager.departments.join(', ') : manager.department %>)</span></div>
         </div>
         <div>
           <div class="text-muted">Período</div>

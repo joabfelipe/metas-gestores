@@ -7,6 +7,7 @@ const GoalSchema = new mongoose.Schema(
     month: { type: Number, required: true }, // 1-12
 
     title: { type: String, required: true },
+    department: { type: String, default: "" }, // Departamento da meta
     businessUnit: { type: String, default: "" }, // Unidade Física (ex: Matriz, Filial X)
     targetValue: { type: Number, required: true },
     unit: { type: String, default: "%" },

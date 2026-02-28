@@ -11,7 +11,7 @@
       <form action="/admin/managers" method="post" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <%- include("../partials/components/input", { label: "Nome", name: "name", placeholder: "Nome do gestor", required: true }) %>
         <%- include("../partials/components/input", { label: "Email", name: "email", type: "email", placeholder: "Email corporativo", required: true }) %>
-        <%- include("../partials/components/input", { label: "Departamento", name: "department", placeholder: "Departamento", required: true }) %>
+        <%- include("../partials/components/input", { label: "Departamentos (separados por vírgula)", name: "department", placeholder: "Ex: Vendas, Marketing", required: true }) %>
         <%- include("../partials/components/input", { label: "Unidades (separadas por vírgula)", name: "unit", placeholder: "Ex: Centro, Shopping", required: false }) %>
         <div class="flex items-end">
           <%- include("../partials/components/button", { type: "submit", label: "Cadastrar", variant: "btn-primary" }) %>
@@ -40,7 +40,7 @@
           <table class="table table-card" style="min-width: 100%;">
             <thead>
               <tr>
-                <th>Departamento</th>
+                <th>Departamentos</th>
                 <th>Unidade</th>
                 <th>Nome</th>
                 <th>Email</th>
@@ -53,9 +53,9 @@
                   <td style="display:none">
                     <form id="update-<%= m._id %>" action="/admin/managers/<%= m._id %>/update" method="post"></form>
                   </td>
-                  <td data-label="Departamento">
-                    <span class="view-mode"><%= m.department %></span>
-                    <input name="department" value="<%= m.department %>" form="update-<%= m._id %>" class="input hidden edit-mode min-w-[150px]" required />
+                  <td data-label="Departamentos">
+                    <span class="view-mode"><%= m.departments ? m.departments.join(', ') : (m.department || '-') %></span>
+                    <input name="department" value="<%= m.departments ? m.departments.join(', ') : (m.department || '') %>" form="update-<%= m._id %>" class="input hidden edit-mode min-w-[150px]" required />
                   </td>
                   <td data-label="Unidade">
                     <span class="view-mode"><%= m.units && m.units.length ? m.units.join(', ') : '-' %></span>

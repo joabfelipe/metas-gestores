@@ -4,7 +4,7 @@ const ManagerSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     email: { type: String, required: true },
-    department: { type: String, required: true },
+    departments: { type: [String], default: [] },
     units: { type: [String], default: [] },
     accessToken: { type: String, required: true, unique: true },
     password: { type: String },
