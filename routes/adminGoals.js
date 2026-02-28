@@ -141,6 +141,155 @@ router.post("/admin/goals", async (req, res) => {
   res.redirect(`/admin/goals?${params.toString()}`);
 });
 
+router.post("/admin/goals/:id/update", async (req, res) => {
+  const { id } = req.params;
+  const { title, targetValue, unit, achievedValue, businessUnit, actionPlan } = req.body;
+
+  await Goal.findByIdAndUpdate(id, {
+    title,
+    targetValue,
+    unit,
+    achievedValue: achievedValue === "" ? null : Number(achievedValue),
+    businessUnit,
+    actionPlan,
+    status: achievedValue ? "PREENCHIDO" : "PENDENTE" // Atualiza status se tiver valor
+  });
+
+  // Tenta manter filtros (ideal seria passar query params no action do form, mas vamos redirecionar pro geral)
+  res.redirect("/admin/goals");
+});
+
+router.post("/admin/goals/batch-update", express.json(), async (req, res) => {
+    try {
+        const { updates } = req.body;
+        if (!updates || !Array.isArray(updates)) {
+            return res.status(400).send("Dados inválidos");
+        }
+
+        for (const update of updates) {
+            await Goal.findByIdAndUpdate(update.id, {
+                title: update.title,
+                targetValue: update.targetValue,
+                unit: update.unit,
+                businessUnit: update.businessUnit,
+                achievedValue: update.achievedValue === "" ? null : Number(update.achievedValue),
+                actionPlan: update.actionPlan,
+                status: update.achievedValue ? "PREENCHIDO" : "PENDENTE"
+            });
+        }
+        
+        res.status(200).send("OK");
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Erro ao atualizar metas");
+    }
+});
+
+router.post("/admin/goals/replicate", async (req, res) => {
+    const { period, managerId } = req.body;
+    const [year, month] = period.split("-").map(Number);
+    
+    // Calcula mês anterior
+    let prevYear = year;
+    let prevMonth = month - 1;
+    if (prevMonth === 0) {
+        prevMonth = 12;
+        prevYear--;
+    }
+
+    const filter = { year: prevYear, month: prevMonth };
+    if (managerId) filter.managerId = managerId;
+
+    const oldGoals = await Goal.find(filter);
+
+    let count = 0;
+    for (const goal of oldGoals) {
+        // Verifica se já existe meta igual para o mês atual
+        const exists = await Goal.findOne({
+            managerId: goal.managerId,
+            title: goal.title,
+            year,
+            month
+        });
+
+        if (!exists) {
+            await Goal.create({
+                managerId: goal.managerId,
+                title: goal.title,
+                description: goal.description,
+                targetValue: goal.targetValue,
+                unit: goal.unit,
+                businessUnit: goal.businessUnit,
+                year,
+                month,
+                achievedValue: null,
+                status: "PENDENTE",
+                actionPlan: ""
+            });
+            count++;
+        }
+    }
+
+    req.flash("success_msg", `${count} metas replicadas com sucesso.`);
+    res.redirect(`/admin/goals?year=${year}&month=${month}&managerId=${managerId}`);
+});
+
+router.post("/admin/goals/copy-unit", async (req, res) => {
+    const { period, managerId, sourceUnit, targetUnit } = req.body;
+    const [year, month] = period.split("-").map(Number);
+
+    const sourceGoals = await Goal.find({ 
+        managerId, 
+        year, 
+        month, 
+        businessUnit: sourceUnit 
+    });
+
+    let count = 0;
+    for (const goal of sourceGoals) {
+        const exists = await Goal.findOne({
+            managerId,
+            title: goal.title,
+            year,
+            month,
+            businessUnit: targetUnit
+        });
+
+        if (!exists) {
+            await Goal.create({
+                managerId,
+                title: goal.title,
+                description: goal.description,
+                targetValue: goal.targetValue,
+                unit: goal.unit,
+                businessUnit: targetUnit,
+                year,
+                month,
+                achievedValue: null,
+                status: "PENDENTE",
+                actionPlan: ""
+            });
+            count++;
+        }
+    }
+
+    req.flash("success_msg", `${count} metas copiadas de ${sourceUnit} para ${targetUnit}.`);
+    res.redirect(`/admin/goals?year=${year}&month=${month}&managerId=${managerId}&businessUnit=${targetUnit}`);
+});
+
+router.post("/admin/goals/delete-all", async (req, res) => {
+    const { period, managerId } = req.body;
+    const [year, month] = period.split("-").map(Number);
+
+    const filter = { year, month };
+    if (managerId) filter.managerId = managerId;
+
+    await Goal.deleteMany(filter);
+
+    req.flash("success_msg", "Metas excluídas com sucesso.");
+    res.redirect(`/admin/goals?year=${year}&month=${month}&managerId=${managerId}`);
+});
+
 router.post("/admin/goals/:id/delete", async (req, res) => {
   const { id } = req.params;
   const goal = await Goal.findById(id);
