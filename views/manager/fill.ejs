@@ -12,7 +12,12 @@
         </h2>
         <p class="text-sm text-muted">Complete os resultados do período informado.</p>
       </div>
-      <div class="flex gap-2">
+      <div class="flex gap-2 items-center">
+        <% if (locals.hasMultipleUnits) { %>
+          <a href="/manager/dashboard?changeUnit=true" class="btn btn-outline btn-sm text-xs h-7">
+            Trocar Unidade
+          </a>
+        <% } %>
         <% if (locals.businessUnit) { %>
           <div class="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs text-primary font-medium">
             <%= businessUnit %>

@@ -149,6 +149,12 @@ router.get("/manager/dashboard", async (req, res) => {
 
   const goals = await Goal.find(filter).sort({ title: 1 });
 
+  // Verifica se o gestor possui metas em outras unidades para mostrar o botão "Trocar Unidade"
+  const distinctUnits = await Goal.distinct('businessUnit', { managerId: manager._id, year, month });
+  // Se tiver mais de uma unidade distinta (e assumindo que "vazio" conta como uma se houver mistura, mas geralmente businessUnit é preenchido)
+  // Se distinctUnits.length > 1, então ele tem múltiplas opções.
+  const hasMultipleUnits = distinctUnits.length > 1;
+
   // Não precisamos mais passar params na URL do formAction se estivermos usando sessão
   // Mas manteremos o formAction apontando para o dashboard limpo
   
@@ -158,6 +164,7 @@ router.get("/manager/dashboard", async (req, res) => {
     year,
     month,
     businessUnit,
+    hasMultipleUnits,
     formAction: `/manager/dashboard`, // URL limpa
     pageTitle: "Dashboard do Gestor",
     showSidebar: false, 

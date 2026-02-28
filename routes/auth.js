@@ -5,6 +5,9 @@ const Manager = require("../models/Manager");
 
 // Render Login Page
 router.get("/login", (req, res) => {
+  if (req.session.user) {
+    return res.redirect("/manager/dashboard");
+  }
   res.render("auth/login", { layout: "layouts/auth" });
 });
 
