@@ -71,7 +71,14 @@ router.get("/manager/dashboard", async (req, res) => {
     month = Number(req.query.month || 1);
   }
 
-  const businessUnit = req.query.businessUnit || "";
+  // Tenta pegar do query param OU da sessão
+  let businessUnit = req.query.businessUnit || req.session.selectedUnit || "";
+
+  // Se o usuário clicou em "Trocar unidade", limpamos a sessão
+  if (req.query.changeUnit) {
+      businessUnit = "";
+      req.session.selectedUnit = null;
+  }
 
   // Se não tem unidade selecionada, verifica se o gestor tem múltiplas unidades com metas
   if (!businessUnit) {
@@ -108,7 +115,9 @@ router.get("/manager/dashboard", async (req, res) => {
     // Se houver apenas 1, redireciona direto.
     
     if (unitsStatus.length === 1) {
-      return res.redirect(`/manager/dashboard?year=${year}&month=${month}&businessUnit=${encodeURIComponent(unitsStatus[0].name)}`);
+      // Salva na sessão antes de redirecionar
+      req.session.selectedUnit = unitsStatus[0].name;
+      return res.redirect(`/manager/dashboard`);
     }
 
     if (unitsStatus.length > 1) {
@@ -126,6 +135,12 @@ router.get("/manager/dashboard", async (req, res) => {
     
     // Se não tiver nenhuma meta, mostra a tela vazia padrão (vai cair no fluxo abaixo com goals vazio)
   }
+  
+  // Se chegamos aqui, temos uma businessUnit definida (seja por query ou sessão)
+  // Vamos garantir que ela esteja na sessão para futuras requisições limpas
+  if (businessUnit && !req.session.selectedUnit) {
+      req.session.selectedUnit = businessUnit;
+  }
 
   const filter = { managerId: manager._id, year, month };
   if (businessUnit) {
@@ -134,23 +149,31 @@ router.get("/manager/dashboard", async (req, res) => {
 
   const goals = await Goal.find(filter).sort({ title: 1 });
 
-  const params = new URLSearchParams();
-  if (year) params.append("year", year);
-  if (month) params.append("month", month);
-  if (businessUnit) params.append("businessUnit", businessUnit);
-
+  // Não precisamos mais passar params na URL do formAction se estivermos usando sessão
+  // Mas manteremos o formAction apontando para o dashboard limpo
+  
   res.render("manager/fill", {
     manager,
     goals,
     year,
     month,
     businessUnit,
-    formAction: `/manager/dashboard?${params.toString()}`,
+    formAction: `/manager/dashboard`, // URL limpa
     pageTitle: "Dashboard do Gestor",
-    showSidebar: false, // Pode ser true se tiver sidebar para gestor
+    showSidebar: false, 
     breadcrumbs: [{ label: "Dashboard" }],
     topbarMeta: "Gestor"
   });
+});
+
+// Nova rota POST para selecionar unidade e limpar URL
+router.post("/manager/select-unit", (req, res) => {
+    const { businessUnit, year, month } = req.body;
+    req.session.selectedUnit = businessUnit;
+    
+    // Opcional: Salvar ano/mês na sessão também se quiser persistir filtros de data
+    
+    res.redirect("/manager/dashboard");
 });
 
 router.post("/manager/dashboard", async (req, res) => {
@@ -207,11 +230,13 @@ router.post("/manager/dashboard", async (req, res) => {
 
   if (pendingGoals > 0) {
     req.flash("success_msg", `Metas de ${businessUnit} salvas! Existem pendências em outras unidades.`);
-    return res.redirect(`/manager/dashboard?year=${year}&month=${month}`); // Redireciona para a seleção
+    // Remove a unidade atual da sessão para forçar a tela de seleção novamente
+    req.session.selectedUnit = null;
+    return res.redirect(`/manager/dashboard`); 
   }
   
   req.flash("success_msg", "Todas as metas foram atualizadas com sucesso!");
-  res.redirect(`/manager/dashboard?year=${year}&month=${month}&businessUnit=${businessUnit}`);
+  res.redirect(`/manager/dashboard`);
 });
 
 router.post("/g/:token", async (req, res) => {

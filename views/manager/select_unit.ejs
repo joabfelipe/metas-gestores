@@ -33,13 +33,18 @@
                 </div>
               </div>
 
-              <a href="/manager/dashboard?businessUnit=<%= encodeURIComponent(unit.name) %>&year=<%= year %>&month=<%= month %>" class="btn btn-outline w-full justify-center">
-                <% if (unit.pending === 0) { %>
-                  Visualizar
-                <% } else { %>
-                  Preencher Metas
-                <% } %>
-              </a>
+              <form action="/manager/select-unit" method="POST" class="w-full">
+                <input type="hidden" name="businessUnit" value="<%= unit.name %>">
+                <input type="hidden" name="year" value="<%= year %>">
+                <input type="hidden" name="month" value="<%= month %>">
+                <button type="submit" class="btn btn-outline w-full justify-center">
+                  <% if (unit.pending === 0) { %>
+                    Visualizar
+                  <% } else { %>
+                    Preencher Metas
+                  <% } %>
+                </button>
+              </form>
             </div>
           </div>
         <% }) %>
