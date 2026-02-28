@@ -60,6 +60,23 @@
         <p class="text-sm text-muted">Defina metas com base no período e gestor.</p>
       </div>
       <div class="flex gap-2">
+        <% if (managerId && department) { %>
+            <% const currentManager = managers.find(m => String(m._id) === String(managerId)); %>
+            <% if (currentManager && currentManager.departments && currentManager.departments.length > 1) { %>
+                <form method="post" action="/admin/goals/copy-department" class="flex gap-2 items-center" onsubmit="return confirm('Deseja copiar as metas do departamento selecionado para o atual?');">
+                    <input type="hidden" name="period" value="<%= year %>-<%= String(month).padStart(2, '0') %>">
+                    <input type="hidden" name="managerId" value="<%= managerId %>">
+                    <input type="hidden" name="targetDepartment" value="<%= department %>">
+                    <select name="sourceDepartment" class="select select-xs w-auto" required>
+                        <option value="">Copiar de...</option>
+                        <% currentManager.departments.filter(d => d !== department).forEach(d => { %>
+                            <option value="<%= d %>"><%= d %></option>
+                        <% }) %>
+                    </select>
+                    <button type="submit" class="btn btn-secondary btn-xs">Copiar Depto</button>
+                </form>
+            <% } %>
+        <% } %>
         <% if (managerId && businessUnit) { %>
             <% const currentManager = managers.find(m => String(m._id) === String(managerId)); %>
             <% if (currentManager && currentManager.units && currentManager.units.length > 1) { %>

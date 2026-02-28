@@ -295,6 +295,55 @@ router.post("/admin/goals/copy-unit", async (req, res) => {
     res.redirect(`/admin/goals?year=${year}&month=${month}&managerId=${managerId}&businessUnit=${targetUnit}`);
 });
 
+router.post("/admin/goals/copy-department", async (req, res) => {
+    const { period, managerId, sourceDepartment, targetDepartment } = req.body;
+    const [year, month] = period.split("-").map(Number);
+
+    const sourceGoals = await Goal.find({ 
+        managerId, 
+        year, 
+        month, 
+        department: sourceDepartment 
+    });
+
+    let count = 0;
+    for (const goal of sourceGoals) {
+        const exists = await Goal.findOne({
+            managerId,
+            title: goal.title,
+            year,
+            month,
+            department: targetDepartment
+        });
+
+        if (!exists) {
+            await Goal.create({
+                managerId,
+                title: goal.title,
+                description: goal.description,
+                targetValue: goal.targetValue,
+                unit: goal.unit,
+                businessUnit: goal.businessUnit,
+                department: targetDepartment,
+                year,
+                month,
+                achievedValue: null,
+                status: "PENDENTE",
+                actionPlan: ""
+            });
+            count++;
+        }
+    }
+
+    req.flash("success_msg", `${count} metas copiadas de ${sourceDepartment} para ${targetDepartment}.`);
+    const params = new URLSearchParams();
+    params.append("year", year);
+    params.append("month", month);
+    params.append("managerId", managerId);
+    params.append("department", targetDepartment);
+    res.redirect(`/admin/goals?${params.toString()}`);
+});
+
 router.post("/admin/goals/delete-all", async (req, res) => {
     const { period, managerId } = req.body;
     const [year, month] = period.split("-").map(Number);
