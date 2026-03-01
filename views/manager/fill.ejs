@@ -57,7 +57,6 @@
             <table class="table table-card">
               <thead>
                 <tr>
-                  <th>Departamento</th>
                   <th>Meta</th>
                   <th>Alvo</th>
                   <th>Atingido</th>
@@ -65,11 +64,19 @@
                 </tr>
               </thead>
               <tbody>
+                <% 
+                  let currentDepartment = null;
+                %>
                 <% goals.forEach((g) => { %>
+                  <% if (currentDepartment !== g.department) { %>
+                    <% currentDepartment = g.department; %>
+                    <tr class="bg-muted/5 border-t border-b">
+                      <td colspan="4" class="py-3 px-4 font-bold text-base text-primary uppercase tracking-wide">
+                        <%= currentDepartment || 'Geral' %>
+                      </td>
+                    </tr>
+                  <% } %>
                   <tr>
-                    <td data-label="Departamento">
-                        <span class="badge badge-outline"><%= g.department || '-' %></span>
-                    </td>
                     <td data-label="Meta">
                       <div class="font-semibold text-foreground"><%= g.title %></div>
                       <input type="hidden" name="goalId[]" value="<%= g._id %>"/>

@@ -27,7 +27,7 @@ router.get("/g/:token", async (req, res) => {
       filter.businessUnit = businessUnit;
   }
 
-  const goals = await Goal.find(filter).sort({ title: 1 });
+  const goals = await Goal.find(filter).sort({ department: 1, title: 1 });
   
   const params = new URLSearchParams();
   if (year) params.append("year", year);
@@ -147,7 +147,7 @@ router.get("/manager/dashboard", async (req, res) => {
       filter.businessUnit = businessUnit;
   }
 
-  const goals = await Goal.find(filter).sort({ title: 1 });
+  const goals = await Goal.find(filter).sort({ department: 1, title: 1 });
 
   // Verifica se o gestor possui metas em outras unidades para mostrar o botão "Trocar Unidade"
   const distinctUnits = await Goal.distinct('businessUnit', { managerId: manager._id, year, month });
