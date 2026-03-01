@@ -270,7 +270,8 @@ router.post("/admin/goals/copy-unit", async (req, res) => {
             title: goal.title,
             year,
             month,
-            businessUnit: targetUnit
+            businessUnit: targetUnit,
+            department: goal.department
         });
 
         if (!exists) {
@@ -294,6 +295,51 @@ router.post("/admin/goals/copy-unit", async (req, res) => {
 
     req.flash("success_msg", `${count} metas copiadas de ${sourceUnit} para ${targetUnit}.`);
     res.redirect(`/admin/goals?year=${year}&month=${month}&managerId=${managerId}&businessUnit=${targetUnit}`);
+});
+
+router.post("/admin/goals/copy-unit-to", async (req, res) => {
+    const { period, managerId, sourceUnit, targetUnit } = req.body;
+    const [year, month] = period.split("-").map(Number);
+
+    const sourceGoals = await Goal.find({ 
+        managerId, 
+        year, 
+        month, 
+        businessUnit: sourceUnit 
+    });
+
+    let count = 0;
+    for (const goal of sourceGoals) {
+        const exists = await Goal.findOne({
+            managerId,
+            title: goal.title,
+            year,
+            month,
+            businessUnit: targetUnit,
+            department: goal.department
+        });
+
+        if (!exists) {
+            await Goal.create({
+                managerId,
+                title: goal.title,
+                description: goal.description,
+                targetValue: goal.targetValue,
+                unit: goal.unit,
+                businessUnit: targetUnit,
+                department: goal.department,
+                year,
+                month,
+                achievedValue: null,
+                status: "PENDENTE",
+                actionPlan: ""
+            });
+            count++;
+        }
+    }
+
+    req.flash("success_msg", `${count} metas copiadas de ${sourceUnit} para ${targetUnit}.`);
+    res.redirect(`/admin/goals?year=${year}&month=${month}&managerId=${managerId}&businessUnit=${sourceUnit}`);
 });
 
 router.post("/admin/goals/copy-department", async (req, res) => {

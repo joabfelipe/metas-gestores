@@ -80,17 +80,30 @@
         <% if (managerId && businessUnit) { %>
             <% const currentManager = managers.find(m => String(m._id) === String(managerId)); %>
             <% if (currentManager && currentManager.units && currentManager.units.length > 1) { %>
-                <form method="post" action="/admin/goals/copy-unit" class="flex gap-2 items-center" onsubmit="return confirm('Deseja copiar as metas da unidade selecionada para a atual?');">
+                <form method="post" action="/admin/goals/copy-unit" class="flex gap-2 items-center" onsubmit="return confirm('Deseja copiar as metas da unidade selecionada para a ATUAL (<%= businessUnit %>)?');">
                     <input type="hidden" name="period" value="<%= year %>-<%= String(month).padStart(2, '0') %>">
                     <input type="hidden" name="managerId" value="<%= managerId %>">
                     <input type="hidden" name="targetUnit" value="<%= businessUnit %>">
                     <select name="sourceUnit" class="select select-xs w-auto" required>
-                        <option value="">Copiar de...</option>
+                        <option value="">Copiar DE...</option>
                         <% currentManager.units.filter(u => u !== businessUnit).forEach(u => { %>
                             <option value="<%= u %>"><%= u %></option>
                         <% }) %>
                     </select>
-                    <button type="submit" class="btn btn-secondary btn-xs">Copiar</button>
+                    <button type="submit" class="btn btn-secondary btn-xs" title="Copiar para esta unidade">📥</button>
+                </form>
+
+                <form method="post" action="/admin/goals/copy-unit-to" class="flex gap-2 items-center" onsubmit="return confirm('Deseja copiar as metas da ATUAL (<%= businessUnit %>) para a unidade selecionada?');">
+                    <input type="hidden" name="period" value="<%= year %>-<%= String(month).padStart(2, '0') %>">
+                    <input type="hidden" name="managerId" value="<%= managerId %>">
+                    <input type="hidden" name="sourceUnit" value="<%= businessUnit %>">
+                    <select name="targetUnit" class="select select-xs w-auto" required>
+                        <option value="">Copiar PARA...</option>
+                        <% currentManager.units.filter(u => u !== businessUnit).forEach(u => { %>
+                            <option value="<%= u %>"><%= u %></option>
+                        <% }) %>
+                    </select>
+                    <button type="submit" class="btn btn-secondary btn-xs" title="Copiar desta unidade para outra">📤</button>
                 </form>
             <% } %>
         <% } %>
