@@ -128,14 +128,15 @@ router.get("/admin/goals", async (req, res) => {
 });
 
 router.post("/admin/goals", async (req, res) => {
-  const { managerId, title, description, targetValue, unit, year, month, department } = req.body;
+  const { managerId, title, description, targetValue, unit, period, department } = req.body;
+  const [year, month] = period.split("-").map(Number);
   
   await Goal.create({
     managerId,
     title,
     description,
     targetValue,
-    businessUnit: unit,
+    businessUnit: req.body.businessUnit || "",
     department: department || "",
     year,
     month,
@@ -149,7 +150,7 @@ router.post("/admin/goals", async (req, res) => {
   if (year) params.append("year", year);
   if (month) params.append("month", month);
   if (managerId) params.append("managerId", managerId);
-  if (unit) params.append("businessUnit", unit);
+  if (req.body.businessUnit) params.append("businessUnit", req.body.businessUnit);
   if (department) params.append("department", department);
 
   res.redirect(`/admin/goals?${params.toString()}`);
