@@ -256,15 +256,23 @@ router.post("/admin/goals/copy-unit", async (req, res) => {
     const { period, managerId, sourceUnit, targetUnit } = req.body;
     const [year, month] = period.split("-").map(Number);
 
-    const sourceGoals = await Goal.find({ 
+    // Modificação: Se sourceDepartment for fornecido, filtra por ele.
+    // Se não, pega todas as metas daquela unidade (para todos os departamentos)
+    const filter = { 
         managerId, 
         year, 
         month, 
         businessUnit: sourceUnit 
-    });
+    };
+
+    // Opcional: Se quiséssemos copiar só de um depto específico (não é o caso do botão "Copiar Unidade", mas fica a lógica pronta)
+    // if (sourceDepartment) filter.department = sourceDepartment;
+
+    const sourceGoals = await Goal.find(filter);
 
     let count = 0;
     for (const goal of sourceGoals) {
+        // Verifica se JÁ existe essa meta na unidade de destino (mesmo título E mesmo departamento)
         const exists = await Goal.findOne({
             managerId,
             title: goal.title,
@@ -281,8 +289,8 @@ router.post("/admin/goals/copy-unit", async (req, res) => {
                 description: goal.description,
                 targetValue: goal.targetValue,
                 unit: goal.unit,
-                businessUnit: targetUnit,
-                department: goal.department,
+                businessUnit: targetUnit, // Unidade destino
+                department: goal.department, // Mantém o mesmo departamento da origem
                 year,
                 month,
                 achievedValue: null,
@@ -298,15 +306,22 @@ router.post("/admin/goals/copy-unit", async (req, res) => {
 });
 
 router.post("/admin/goals/copy-unit-to", async (req, res) => {
-    const { period, managerId, sourceUnit, targetUnit } = req.body;
+    const { period, managerId, sourceUnit, targetUnit, department } = req.body; // Adicionado department
     const [year, month] = period.split("-").map(Number);
 
-    const sourceGoals = await Goal.find({ 
+    const filter = { 
         managerId, 
         year, 
         month, 
         businessUnit: sourceUnit 
-    });
+    };
+
+    // Se um departamento foi selecionado no filtro principal, copia APENAS as metas desse departamento
+    if (department) {
+        filter.department = department;
+    }
+
+    const sourceGoals = await Goal.find(filter);
 
     let count = 0;
     for (const goal of sourceGoals) {
@@ -338,8 +353,16 @@ router.post("/admin/goals/copy-unit-to", async (req, res) => {
         }
     }
 
-    req.flash("success_msg", `${count} metas copiadas de ${sourceUnit} para ${targetUnit}.`);
-    res.redirect(`/admin/goals?year=${year}&month=${month}&managerId=${managerId}&businessUnit=${sourceUnit}`);
+    req.flash("success_msg", `${count} metas copiadas de ${sourceUnit} para ${targetUnit}${department ? ` (Depto: ${department})` : ''}.`);
+    // Redireciona mantendo o departamento se existir
+    const params = new URLSearchParams();
+    params.append("year", year);
+    params.append("month", month);
+    params.append("managerId", managerId);
+    params.append("businessUnit", sourceUnit);
+    if (department) params.append("department", department);
+    
+    res.redirect(`/admin/goals?${params.toString()}`);
 });
 
 router.post("/admin/goals/copy-department", async (req, res) => {

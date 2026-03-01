@@ -93,17 +93,18 @@
                     <button type="submit" class="btn btn-secondary btn-xs" title="Copiar para esta unidade">📥</button>
                 </form>
 
-                <form method="post" action="/admin/goals/copy-unit-to" class="flex gap-2 items-center" onsubmit="return confirm('Deseja copiar as metas da ATUAL (<%= businessUnit %>) para a unidade selecionada?');">
+                <form method="post" action="/admin/goals/copy-unit-to" class="flex gap-2 items-center" onsubmit="return confirm('Deseja copiar as metas <%= department ? `do departamento ${department}` : '' %> da ATUAL (<%= businessUnit %>) para a unidade selecionada?');">
                     <input type="hidden" name="period" value="<%= year %>-<%= String(month).padStart(2, '0') %>">
                     <input type="hidden" name="managerId" value="<%= managerId %>">
                     <input type="hidden" name="sourceUnit" value="<%= businessUnit %>">
+                    <input type="hidden" name="department" value="<%= department || '' %>">
                     <select name="targetUnit" class="select select-xs w-auto" required>
                         <option value="">Copiar PARA...</option>
                         <% currentManager.units.filter(u => u !== businessUnit).forEach(u => { %>
                             <option value="<%= u %>"><%= u %></option>
                         <% }) %>
                     </select>
-                    <button type="submit" class="btn btn-secondary btn-xs" title="Copiar desta unidade para outra">📤</button>
+                    <button type="submit" class="btn btn-secondary btn-xs" title="Copiar <%= department ? `metas de ${department}` : 'todas as metas' %> desta unidade para outra">📤</button>
                 </form>
             <% } %>
         <% } %>
