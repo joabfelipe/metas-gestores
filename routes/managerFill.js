@@ -215,13 +215,14 @@ router.post("/manager/dashboard", async (req, res) => {
 
   for (let i = 0; i < ids.length; i++) {
     const filter = { _id: ids[i], managerId: manager._id, year, month };
+    const val = values[i] === "" ? null : Number(values[i]);
     
     await Goal.findOneAndUpdate(
       filter,
       {
-        achievedValue: values[i] === "" ? null : Number(values[i]),
+        achievedValue: val,
         actionPlan: plans[i] || "",
-        status: "PREENCHIDO",
+        status: val !== null ? "PREENCHIDO" : "PENDENTE",
       }
     );
   }
@@ -275,13 +276,14 @@ router.post("/g/:token", async (req, res) => {
     // Se o filtro de unidade estiver ativo, só deve atualizar as metas daquela unidade.
     // Mas o ID da meta já é único, então o filtro extra é só segurança.
     const filter = { _id: ids[i], managerId: manager._id, year, month };
+    const val = values[i] === "" ? null : Number(values[i]);
     
     await Goal.findOneAndUpdate(
       filter,
       {
-        achievedValue: values[i] === "" ? null : Number(values[i]),
+        achievedValue: val,
         actionPlan: plans[i] || "",
-        status: "PREENCHIDO",
+        status: val !== null ? "PREENCHIDO" : "PENDENTE",
       }
     );
   }
@@ -299,6 +301,57 @@ router.post("/g/:token", async (req, res) => {
     breadcrumbs: [{ label: "Confirmação" }],
     topbarMeta: "Gestor"
   });
+});
+
+// AJAX route for individual goal saving (Session)
+router.post("/manager/save-goal", async (req, res) => {
+  if (!req.session.user || req.session.user.role !== 'manager') {
+    return res.status(401).json({ error: "Não autorizado" });
+  }
+
+  const manager = await Manager.findById(req.session.user.id);
+  if (!manager) return res.status(401).json({ error: "Gestor não encontrado" });
+
+  const { goalId, achievedValue, actionPlan } = req.body;
+  
+  if (!goalId) return res.status(400).json({ error: "ID da meta é obrigatório" });
+
+  const val = achievedValue === "" ? null : Number(achievedValue);
+  
+  await Goal.findOneAndUpdate(
+    { _id: goalId, managerId: manager._id },
+    {
+      achievedValue: val,
+      actionPlan: actionPlan || "",
+      status: val !== null ? "PREENCHIDO" : "PENDENTE",
+    }
+  );
+
+  res.json({ success: true });
+});
+
+// AJAX route for individual goal saving (Token)
+router.post("/g/:token/save-goal", async (req, res) => {
+  const { token } = req.params;
+  const manager = await Manager.findOne({ accessToken: token });
+  if (!manager) return res.status(401).json({ error: "Token inválido" });
+
+  const { goalId, achievedValue, actionPlan } = req.body;
+  
+  if (!goalId) return res.status(400).json({ error: "ID da meta é obrigatório" });
+
+  const val = achievedValue === "" ? null : Number(achievedValue);
+  
+  await Goal.findOneAndUpdate(
+    { _id: goalId, managerId: manager._id },
+    {
+      achievedValue: val,
+      actionPlan: actionPlan || "",
+      status: val !== null ? "PREENCHIDO" : "PENDENTE",
+    }
+  );
+
+  res.json({ success: true });
 });
 
 module.exports = router;
