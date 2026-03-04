@@ -46,8 +46,11 @@
             <% }) %>
           </select>
         </div>
-        <div class="flex items-end">
+        <div class="flex items-end gap-2">
           <%- include("../partials/components/button", { type: "submit", label: "Filtrar", variant: "btn-primary" }) %>
+          <button type="submit" formaction="/admin/goals/export" formmethod="get" class="btn btn-secondary" title="Exportar metas filtradas para CSV">
+            Exportar
+          </button>
         </div>
       </form>
     </div>

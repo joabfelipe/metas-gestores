@@ -127,6 +127,85 @@ router.get("/admin/goals", async (req, res) => {
   });
 });
 
+// Exporta metas para CSV
+router.get("/admin/goals/export", async (req, res) => {
+  let year = 2026;
+  let month = 1;
+
+  if (req.query.period) {
+    const parts = req.query.period.split("-");
+    year = Number(parts[0]);
+    month = Number(parts[1]);
+  } else if (req.query.year && req.query.month) {
+    year = Number(req.query.year);
+    month = Number(req.query.month);
+  } else {
+    const now = new Date();
+    year = now.getFullYear();
+    month = now.getMonth() + 1;
+  }
+
+  const managerId = req.query.managerId || "";
+  const businessUnit = req.query.businessUnit || "";
+  const department = req.query.department || "";
+
+  const filter = { year, month };
+  if (managerId) filter.managerId = managerId;
+  if (businessUnit) filter.businessUnit = businessUnit;
+  if (department) filter.department = department;
+
+  const goals = await Goal.find(filter)
+    .populate("managerId")
+    .sort({ "managerId.departments.0": 1, "managerId.name": 1, title: 1 });
+
+  const headers = [
+    "Gestor",
+    "Email",
+    "Departamentos",
+    "Unidades",
+    "Ano",
+    "Mês",
+    "Título",
+    "Departamento (Meta)",
+    "Unidade (Meta)",
+    "Meta",
+    "Medida",
+    "Realizado",
+    "Status",
+    "Plano de Ação"
+  ];
+
+  const csvRows = [headers.join(",")];
+
+  goals.forEach(goal => {
+    const manager = goal.managerId;
+    const row = [
+      `"${manager ? manager.name : 'N/A'}"`,
+      `"${manager ? manager.email : 'N/A'}"`,
+      `"${manager ? (manager.departments || []).join('; ') : ''}"`,
+      `"${manager ? (manager.units || []).join('; ') : ''}"`,
+      goal.year,
+      goal.month,
+      `"${goal.title.replace(/"/g, '""')}"`,
+      `"${goal.department || ''}"`,
+      `"${goal.businessUnit || ''}"`,
+      goal.targetValue,
+      `"${goal.unit}"`,
+      goal.achievedValue !== null ? goal.achievedValue : "",
+      `"${goal.status}"`,
+      `"${(goal.actionPlan || '').replace(/"/g, '""')}"`
+    ];
+    csvRows.push(row.join(","));
+  });
+
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="metas_backup_${year}_${month}.csv"`);
+  
+  // Adiciona BOM para Excel reconhecer UTF-8 corretamente
+  res.write('\uFEFF');
+  res.end(csvRows.join("\n"));
+});
+
 router.post("/admin/goals", async (req, res) => {
   const { managerId, title, description, targetValue, unit, period, department } = req.body;
   const [year, month] = period.split("-").map(Number);
