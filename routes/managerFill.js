@@ -30,7 +30,10 @@ router.get("/g/:token", async (req, res) => {
 
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
-  const isEditable = (year > currentYear) || (year === currentYear && month >= currentMonth);
+  // Permite edição apenas no mês atual ou futuro, ou até 2 meses passados
+  // Lógica: (ano_alvo - ano_atual) * 12 + (mes_alvo - mes_atual) >= -2
+  const monthDiff = (year - currentYear) * 12 + (month - currentMonth);
+  const isEditable = monthDiff >= -2;
 
   const goals = await Goal.find(filter).sort({ department: 1, title: 1 });
   
@@ -187,9 +190,10 @@ router.get("/manager/dashboard", async (req, res) => {
 
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
-  // Permite edição apenas no mês atual ou futuro (conforme solicitado: meses passados apenas visualização)
-  // Ajuste essa lógica se quiser permitir edição de meses passados (ex: mês anterior até dia 5)
-  const isEditable = (year > currentYear) || (year === currentYear && month >= currentMonth);
+  // Permite edição apenas no mês atual ou futuro, ou até 2 meses passados
+  // Lógica: (ano_alvo - ano_atual) * 12 + (mes_alvo - mes_atual) >= -2
+  const monthDiff = (year - currentYear) * 12 + (month - currentMonth);
+  const isEditable = monthDiff >= -2;
 
   let formAction = `/manager/dashboard?period=${year}-${String(month).padStart(2, '0')}`;
   if (businessUnit) {
