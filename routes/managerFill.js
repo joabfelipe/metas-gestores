@@ -156,10 +156,16 @@ router.get("/manager/dashboard", async (req, res) => {
   const goals = await Goal.find(filter).sort({ department: 1, title: 1 });
 
   // Verifica se o gestor possui metas em outras unidades para mostrar o botão "Trocar Unidade"
-  const distinctUnits = await Goal.distinct('businessUnit', { managerId: manager._id, year, month });
-  // Se tiver mais de uma unidade distinta (e assumindo que "vazio" conta como uma se houver mistura, mas geralmente businessUnit é preenchido)
-  // Se distinctUnits.length > 1, então ele tem múltiplas opções.
-  const hasMultipleUnits = distinctUnits.length > 1;
+  // Modificado: Agora verifica todas as unidades que o gestor já teve metas, independente do mês atual
+  // Isso garante que o botão não suma quando se navega para um mês vazio
+  const distinctUnits = await Goal.distinct('businessUnit', { managerId: manager._id });
+  
+  // Também considera as unidades cadastradas no perfil do gestor
+  const managerUnits = manager.units || [];
+  const allPossibleUnits = new Set([...distinctUnits, ...managerUnits]);
+  
+  // Se tiver mais de uma unidade possível, mostra o botão
+  const hasMultipleUnits = allPossibleUnits.size > 1;
 
   const now = new Date();
   const currentYear = now.getFullYear();
