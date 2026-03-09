@@ -185,6 +185,8 @@ router.get("/manager/dashboard", async (req, res) => {
   // Se tiver mais de uma unidade possível, mostra o botão
   const hasMultipleUnits = allPossibleUnits.size > 1;
 
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
   // Permite edição apenas no mês atual ou futuro (conforme solicitado: meses passados apenas visualização)
   // Ajuste essa lógica se quiser permitir edição de meses passados (ex: mês anterior até dia 5)
   const isEditable = (year > currentYear) || (year === currentYear && month >= currentMonth);
