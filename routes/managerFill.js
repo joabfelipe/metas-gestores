@@ -7,14 +7,15 @@ const router = express.Router();
 router.get("/g/:token", async (req, res) => {
   const { token } = req.params;
   
-  let year = 2026;
-  let month = 1;
+  const now = new Date();
+  let year = now.getFullYear();
+  let month = now.getMonth() + 1;
 
   if (req.query.period) {
     [year, month] = req.query.period.split("-").map(Number);
-  } else {
-    year = Number(req.query.year || 2026);
-    month = Number(req.query.month || 1);
+  } else if (req.query.year || req.query.month) {
+    year = Number(req.query.year || now.getFullYear());
+    month = Number(req.query.month || (now.getMonth() + 1));
   }
 
   const businessUnit = req.query.businessUnit || "";
@@ -67,14 +68,15 @@ router.get("/manager/dashboard", async (req, res) => {
   const manager = await Manager.findById(req.session.user.id);
   if (!manager) return res.redirect("/login");
 
-  let year = 2026;
-  let month = 1;
+  const now = new Date();
+  let year = now.getFullYear();
+  let month = now.getMonth() + 1;
 
   if (req.query.period) {
     [year, month] = req.query.period.split("-").map(Number);
-  } else {
-    year = Number(req.query.year || 2026);
-    month = Number(req.query.month || 1);
+  } else if (req.query.year || req.query.month) {
+    year = Number(req.query.year || now.getFullYear());
+    month = Number(req.query.month || (now.getMonth() + 1));
   }
 
   // Tenta pegar do query param OU da sessão
@@ -192,9 +194,11 @@ router.get("/manager/dashboard", async (req, res) => {
   // Ajuste essa lógica se quiser permitir edição de meses passados (ex: mês anterior até dia 5)
   const isEditable = (year > currentYear) || (year === currentYear && month >= currentMonth);
 
-  // Não precisamos mais passar params na URL do formAction se estivermos usando sessão
-  // Mas manteremos o formAction apontando para o dashboard limpo
-  
+  let formAction = `/manager/dashboard?period=${year}-${String(month).padStart(2, '0')}`;
+  if (businessUnit) {
+    formAction += `&businessUnit=${encodeURIComponent(businessUnit)}`;
+  }
+
   res.render("manager/fill", {
     manager,
     goals,
@@ -203,7 +207,7 @@ router.get("/manager/dashboard", async (req, res) => {
     businessUnit,
     hasMultipleUnits,
     isEditable,
-    formAction: `/manager/dashboard`, // URL limpa
+    formAction,
     pageTitle: "Dashboard do Gestor",
     showSidebar: false, 
     breadcrumbs: [{ label: "Dashboard" }],
@@ -232,14 +236,15 @@ router.post("/manager/dashboard", async (req, res) => {
   const manager = await Manager.findById(req.session.user.id);
   if (!manager) return res.redirect("/login");
 
-  let year = 2026;
-  let month = 1;
+  const now = new Date();
+  let year = now.getFullYear();
+  let month = now.getMonth() + 1;
 
   if (req.query.period) {
     [year, month] = req.query.period.split("-").map(Number);
-  } else {
-    year = Number(req.query.year || 2026);
-    month = Number(req.query.month || 1);
+  } else if (req.query.year || req.query.month) {
+    year = Number(req.query.year || now.getFullYear());
+    month = Number(req.query.month || (now.getMonth() + 1));
   }
 
   const businessUnit = req.query.businessUnit || "";
@@ -277,24 +282,31 @@ router.post("/manager/dashboard", async (req, res) => {
     req.flash("success_msg", `Metas de ${businessUnit} salvas! Existem pendências em outras unidades.`);
     // Remove a unidade atual da sessão para forçar a tela de seleção novamente
     req.session.selectedUnit = null;
-    return res.redirect(`/manager/dashboard`); 
+    const period = `${year}-${String(month).padStart(2, '0')}`;
+    return res.redirect(`/manager/dashboard?period=${period}`); 
   }
   
   req.flash("success_msg", "Todas as metas foram atualizadas com sucesso!");
-  res.redirect(`/manager/dashboard`);
+  const period = `${year}-${String(month).padStart(2, '0')}`;
+  let redirectUrl = `/manager/dashboard?period=${period}`;
+  if (businessUnit) {
+      redirectUrl += `&businessUnit=${encodeURIComponent(businessUnit)}`;
+  }
+  res.redirect(redirectUrl);
 });
 
 router.post("/g/:token", async (req, res) => {
   const { token } = req.params;
   
-  let year = 2026;
-  let month = 1;
+  const now = new Date();
+  let year = now.getFullYear();
+  let month = now.getMonth() + 1;
 
   if (req.query.period) {
     [year, month] = req.query.period.split("-").map(Number);
-  } else {
-    year = Number(req.query.year || 2026);
-    month = Number(req.query.month || 1);
+  } else if (req.query.year || req.query.month) {
+    year = Number(req.query.year || now.getFullYear());
+    month = Number(req.query.month || (now.getMonth() + 1));
   }
 
   const businessUnit = req.query.businessUnit || "";
