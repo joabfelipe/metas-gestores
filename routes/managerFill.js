@@ -90,9 +90,26 @@ router.get("/manager/dashboard", async (req, res) => {
   if (!businessUnit) {
     const allGoals = await Goal.find({ managerId: manager._id, year, month });
     
+    // Recupera todas as unidades possíveis do gestor (histórico + cadastro)
+    const distinctUnits = await Goal.distinct('businessUnit', { managerId: manager._id });
+    const managerUnits = manager.units || [];
+    const allPossibleUnits = new Set([...distinctUnits, ...managerUnits]);
+    
     // Agrupa metas por unidade
     const unitsMap = new Map();
+
+    // Inicializa o mapa com todas as unidades possíveis
+    allPossibleUnits.forEach(unit => {
+        if (!unit) return; // Ignora vazios se houver
+        unitsMap.set(unit, {
+            name: unit,
+            total: 0,
+            filled: 0,
+            pending: 0
+        });
+    });
     
+    // Preenche com os dados das metas do mês atual
     allGoals.forEach(goal => {
       const unit = goal.businessUnit || "Padrão";
       if (!unitsMap.has(unit)) {
@@ -113,7 +130,7 @@ router.get("/manager/dashboard", async (req, res) => {
       }
     });
 
-    const unitsStatus = Array.from(unitsMap.values());
+    const unitsStatus = Array.from(unitsMap.values()).sort((a, b) => a.name.localeCompare(b.name));
 
     // Se tiver mais de uma unidade OU (uma unidade e a gente quer mostrar o card bonito mesmo assim),
     // mas a lógica pedida é redirecionar se não precisar escolher.
