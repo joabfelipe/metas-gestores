@@ -216,9 +216,8 @@ router.post("/manager/select-unit", (req, res) => {
     const { businessUnit, year, month } = req.body;
     req.session.selectedUnit = businessUnit;
     
-    // Opcional: Salvar ano/mês na sessão também se quiser persistir filtros de data
-    
-    res.redirect("/manager/dashboard");
+    const period = `${year}-${String(month).padStart(2, '0')}`;
+    res.redirect(`/manager/dashboard?period=${period}`);
 });
 
 router.post("/manager/dashboard", async (req, res) => {
