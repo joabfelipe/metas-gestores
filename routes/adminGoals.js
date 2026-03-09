@@ -331,99 +331,59 @@ router.post("/admin/goals/replicate", async (req, res) => {
     res.redirect(`/admin/goals?year=${year}&month=${month}&managerId=${managerId}`);
 });
 
-router.post("/admin/goals/copy-unit", async (req, res) => {
-    const { period, managerId, sourceUnit, targetUnit } = req.body;
-    const [year, month] = period.split("-").map(Number);
+router.post("/admin/goals/replicate-advanced", async (req, res) => {
+    const { 
+        sourcePeriod, 
+        sourceManagerId, 
+        sourceUnit, 
+        sourceDepartment,
+        targetPeriod,
+        targetManagerId,
+        targetUnit
+    } = req.body;
 
-    // Modificação: Se sourceDepartment for fornecido, filtra por ele.
-    // Se não, pega todas as metas daquela unidade (para todos os departamentos)
+    const [sourceYear, sourceMonth] = sourcePeriod.split("-").map(Number);
+    const [targetYear, targetMonth] = targetPeriod.split("-").map(Number);
+
     const filter = { 
-        managerId, 
-        year, 
-        month, 
-        businessUnit: sourceUnit 
+        year: sourceYear, 
+        month: sourceMonth
     };
 
-    // Opcional: Se quiséssemos copiar só de um depto específico (não é o caso do botão "Copiar Unidade", mas fica a lógica pronta)
-    // if (sourceDepartment) filter.department = sourceDepartment;
+    if (sourceManagerId) filter.managerId = sourceManagerId;
+    if (sourceUnit) filter.businessUnit = sourceUnit;
+    if (sourceDepartment) filter.department = sourceDepartment;
 
     const sourceGoals = await Goal.find(filter);
 
     let count = 0;
+    const errors = [];
+
     for (const goal of sourceGoals) {
-        // Verifica se JÁ existe essa meta na unidade de destino (mesmo título E mesmo departamento)
+        const newManagerId = targetManagerId || goal.managerId;
+        const newUnit = targetUnit || goal.businessUnit;
+        
+        // Verifica duplicidade no destino
         const exists = await Goal.findOne({
-            managerId,
+            managerId: newManagerId,
             title: goal.title,
-            year,
-            month,
-            businessUnit: targetUnit,
+            year: targetYear,
+            month: targetMonth,
+            businessUnit: newUnit,
             department: goal.department
         });
 
         if (!exists) {
             await Goal.create({
-                managerId,
+                managerId: newManagerId,
                 title: goal.title,
                 description: goal.description,
                 targetValue: goal.targetValue,
                 unit: goal.unit,
-                businessUnit: targetUnit, // Unidade destino
-                department: goal.department, // Mantém o mesmo departamento da origem
-                year,
-                month,
-                achievedValue: null,
-                status: "PENDENTE",
-                actionPlan: ""
-            });
-            count++;
-        }
-    }
-
-    req.flash("success_msg", `${count} metas copiadas de ${sourceUnit} para ${targetUnit}.`);
-    res.redirect(`/admin/goals?year=${year}&month=${month}&managerId=${managerId}&businessUnit=${targetUnit}`);
-});
-
-router.post("/admin/goals/copy-unit-to", async (req, res) => {
-    const { period, managerId, sourceUnit, targetUnit, department } = req.body; // Adicionado department
-    const [year, month] = period.split("-").map(Number);
-
-    const filter = { 
-        managerId, 
-        year, 
-        month, 
-        businessUnit: sourceUnit 
-    };
-
-    // Se um departamento foi selecionado no filtro principal, copia APENAS as metas desse departamento
-    if (department) {
-        filter.department = department;
-    }
-
-    const sourceGoals = await Goal.find(filter);
-
-    let count = 0;
-    for (const goal of sourceGoals) {
-        const exists = await Goal.findOne({
-            managerId,
-            title: goal.title,
-            year,
-            month,
-            businessUnit: targetUnit,
-            department: goal.department
-        });
-
-        if (!exists) {
-            await Goal.create({
-                managerId,
-                title: goal.title,
-                description: goal.description,
-                targetValue: goal.targetValue,
-                unit: goal.unit,
-                businessUnit: targetUnit,
+                businessUnit: newUnit,
                 department: goal.department,
-                year,
-                month,
+                year: targetYear,
+                month: targetMonth,
                 achievedValue: null,
                 status: "PENDENTE",
                 actionPlan: ""
@@ -432,65 +392,13 @@ router.post("/admin/goals/copy-unit-to", async (req, res) => {
         }
     }
 
-    req.flash("success_msg", `${count} metas copiadas de ${sourceUnit} para ${targetUnit}${department ? ` (Depto: ${department})` : ''}.`);
-    // Redireciona mantendo o departamento se existir
-    const params = new URLSearchParams();
-    params.append("year", year);
-    params.append("month", month);
-    params.append("managerId", managerId);
-    params.append("businessUnit", sourceUnit);
-    if (department) params.append("department", department);
-    
-    res.redirect(`/admin/goals?${params.toString()}`);
-});
-
-router.post("/admin/goals/copy-department", async (req, res) => {
-    const { period, managerId, sourceDepartment, targetDepartment } = req.body;
-    const [year, month] = period.split("-").map(Number);
-
-    const sourceGoals = await Goal.find({ 
-        managerId, 
-        year, 
-        month, 
-        department: sourceDepartment 
-    });
-
-    let count = 0;
-    for (const goal of sourceGoals) {
-        const exists = await Goal.findOne({
-            managerId,
-            title: goal.title,
-            year,
-            month,
-            department: targetDepartment
-        });
-
-        if (!exists) {
-            await Goal.create({
-                managerId,
-                title: goal.title,
-                description: goal.description,
-                targetValue: goal.targetValue,
-                unit: goal.unit,
-                businessUnit: goal.businessUnit,
-                department: targetDepartment,
-                year,
-                month,
-                achievedValue: null,
-                status: "PENDENTE",
-                actionPlan: ""
-            });
-            count++;
-        }
+    if (count > 0) {
+        req.flash("success_msg", `${count} metas replicadas com sucesso.`);
+    } else {
+        req.flash("error_msg", "Nenhuma meta nova foi criada (verifique se já existem ou se a origem tem metas).");
     }
 
-    req.flash("success_msg", `${count} metas copiadas de ${sourceDepartment} para ${targetDepartment}.`);
-    const params = new URLSearchParams();
-    params.append("year", year);
-    params.append("month", month);
-    params.append("managerId", managerId);
-    params.append("department", targetDepartment);
-    res.redirect(`/admin/goals?${params.toString()}`);
+    res.redirect(`/admin/goals?year=${targetYear}&month=${targetMonth}&managerId=${targetManagerId || sourceManagerId}`);
 });
 
 router.post("/admin/goals/delete-all", async (req, res) => {

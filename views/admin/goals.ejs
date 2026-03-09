@@ -1,4 +1,6 @@
 <section class="space-y-6">
+
+
   <div class="card">
     <div class="card-header">
       <div>
@@ -57,60 +59,108 @@
   </div>
 
   <div class="card">
+    <div class="card-header">
+      <div>
+        <h3 class="card-title">Replicação Avançada</h3>
+        <p class="text-sm text-muted">Copie metas de um período, gestor ou unidade para outro destino.</p>
+      </div>
+    </div>
+    <div class="card-body">
+      <form method="post" action="/admin/goals/replicate-advanced" class="grid gap-6 md:grid-cols-2" onsubmit="return confirm('Tem certeza que deseja replicar as metas selecionadas?');">
+        <!-- Origem -->
+        <div class="space-y-4 border p-4 rounded bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700">
+          <h4 class="font-medium text-xs uppercase tracking-wider text-gray-500 mb-4 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-blue-500"></span> Origem (De onde copiar)
+          </h4>
+          
+          <div class="grid gap-4 sm:grid-cols-2">
+            <div class="field sm:col-span-2">
+                <label class="field-label">Período *</label>
+                <input type="month" name="sourcePeriod" value="<%= year %>-<%= String(month).padStart(2, '0') %>" class="input" required />
+            </div>
+            
+            <div class="field">
+                <label class="field-label">Gestor</label>
+                <select name="sourceManagerId" class="select">
+                    <option value="">Todos</option>
+                    <% managers.forEach(m => { %>
+                    <option value="<%= m._id %>" <%= String(managerId)===String(m._id) ? "selected" : "" %>><%= m.name %></option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div class="field">
+                <label class="field-label">Unidade</label>
+                <select name="sourceUnit" class="select">
+                    <option value="">Todas</option>
+                    <% availableUnits.forEach(u => { %>
+                    <option value="<%= u %>" <%= String(businessUnit)===String(u) ? "selected" : "" %>><%= u %></option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div class="field sm:col-span-2">
+                <label class="field-label">Departamento</label>
+                <select name="sourceDepartment" class="select">
+                    <option value="">Todos</option>
+                    <% availableDepartments.forEach(d => { %>
+                    <option value="<%= d %>" <%= String(department)===String(d) ? "selected" : "" %>><%= d %></option>
+                    <% }) %>
+                </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Destino -->
+        <div class="space-y-4 border p-4 rounded bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700">
+          <h4 class="font-medium text-xs uppercase tracking-wider text-gray-500 mb-4 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-green-500"></span> Destino (Para onde copiar)
+          </h4>
+          
+          <div class="grid gap-4 sm:grid-cols-2">
+            <div class="field sm:col-span-2">
+                <label class="field-label">Novo Período *</label>
+                <input type="month" name="targetPeriod" class="input" required />
+            </div>
+            
+            <div class="field">
+                <label class="field-label">Novo Gestor</label>
+                <select name="targetManagerId" class="select">
+                    <option value="">Manter original</option>
+                    <% managers.forEach(m => { %>
+                    <option value="<%= m._id %>"><%= m.name %></option>
+                    <% }) %>
+                </select>
+                <p class="text-xs text-muted mt-1">Deixe vazio para manter o mesmo gestor.</p>
+            </div>
+
+            <div class="field">
+                <label class="field-label">Nova Unidade</label>
+                <input list="units-datalist-target" name="targetUnit" class="input" placeholder="Manter original" />
+                <datalist id="units-datalist-target">
+                    <% availableUnits.forEach(u => { %>
+                    <option value="<%= u %>"></option>
+                    <% }) %>
+                </datalist>
+                <p class="text-xs text-muted mt-1">Deixe vazio para manter a mesma unidade.</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="md:col-span-2 flex justify-end pt-2">
+            <%- include("../partials/components/button", { type: "submit", label: "Executar Replicação", variant: "btn-primary", icon: "copy" }) %>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
     <div class="card-header flex justify-between items-center">
       <div>
         <h3 class="card-title">Criar meta</h3>
         <p class="text-sm text-muted">Defina metas com base no período e gestor.</p>
       </div>
       <div class="flex gap-2">
-        <% if (managerId && department) { %>
-            <% const currentManager = managers.find(m => String(m._id) === String(managerId)); %>
-            <% if (currentManager && currentManager.departments && currentManager.departments.length > 1) { %>
-                <form method="post" action="/admin/goals/copy-department" class="flex gap-2 items-center" onsubmit="return confirm('Deseja copiar as metas do departamento selecionado para o atual?');">
-                    <input type="hidden" name="period" value="<%= year %>-<%= String(month).padStart(2, '0') %>">
-                    <input type="hidden" name="managerId" value="<%= managerId %>">
-                    <input type="hidden" name="targetDepartment" value="<%= department %>">
-                    <select name="sourceDepartment" class="select select-xs w-auto" required>
-                        <option value="">Copiar de...</option>
-                        <% currentManager.departments.filter(d => d !== department).forEach(d => { %>
-                            <option value="<%= d %>"><%= d %></option>
-                        <% }) %>
-                    </select>
-                    <button type="submit" class="btn btn-secondary btn-xs">Copiar Depto</button>
-                </form>
-            <% } %>
-        <% } %>
-        <% if (managerId && businessUnit) { %>
-            <% const currentManager = managers.find(m => String(m._id) === String(managerId)); %>
-            <% if (currentManager && currentManager.units && currentManager.units.length > 1) { %>
-                <form method="post" action="/admin/goals/copy-unit" class="flex gap-2 items-center" onsubmit="return confirm('Deseja copiar as metas da unidade selecionada para a ATUAL (<%= businessUnit %>)?');">
-                    <input type="hidden" name="period" value="<%= year %>-<%= String(month).padStart(2, '0') %>">
-                    <input type="hidden" name="managerId" value="<%= managerId %>">
-                    <input type="hidden" name="targetUnit" value="<%= businessUnit %>">
-                    <select name="sourceUnit" class="select select-xs w-auto" required>
-                        <option value="">Copiar DE...</option>
-                        <% currentManager.units.filter(u => u !== businessUnit).forEach(u => { %>
-                            <option value="<%= u %>"><%= u %></option>
-                        <% }) %>
-                    </select>
-                    <button type="submit" class="btn btn-secondary btn-xs" title="Copiar para esta unidade">📥</button>
-                </form>
-
-                <form method="post" action="/admin/goals/copy-unit-to" class="flex gap-2 items-center" onsubmit="return confirm('Deseja copiar as metas <%= department ? `do departamento ${department}` : '' %> da ATUAL (<%= businessUnit %>) para a unidade selecionada?');">
-                    <input type="hidden" name="period" value="<%= year %>-<%= String(month).padStart(2, '0') %>">
-                    <input type="hidden" name="managerId" value="<%= managerId %>">
-                    <input type="hidden" name="sourceUnit" value="<%= businessUnit %>">
-                    <input type="hidden" name="department" value="<%= department || '' %>">
-                    <select name="targetUnit" class="select select-xs w-auto" required>
-                        <option value="">Copiar PARA...</option>
-                        <% currentManager.units.filter(u => u !== businessUnit).forEach(u => { %>
-                            <option value="<%= u %>"><%= u %></option>
-                        <% }) %>
-                    </select>
-                    <button type="submit" class="btn btn-secondary btn-xs" title="Copiar <%= department ? `metas de ${department}` : 'todas as metas' %> desta unidade para outra">📤</button>
-                </form>
-            <% } %>
-        <% } %>
         <form method="post" action="/admin/goals/replicate" onsubmit="return confirm('Isso irá copiar as metas do mês anterior para o mês atual (apenas as que ainda não existem). Continuar?');">
             <input type="hidden" name="period" value="<%= year %>-<%= String(month).padStart(2, '0') %>">
             <input type="hidden" name="managerId" value="<%= managerId %>">
