@@ -27,6 +27,11 @@ router.get("/g/:token", async (req, res) => {
       filter.businessUnit = businessUnit;
   }
 
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+  const isEditable = (year > currentYear) || (year === currentYear && month >= currentMonth);
+
   const goals = await Goal.find(filter).sort({ department: 1, title: 1 });
   
   const params = new URLSearchParams();
@@ -40,6 +45,7 @@ router.get("/g/:token", async (req, res) => {
     year,
     month,
     businessUnit,
+    isEditable,
     formAction: `/g/${token}?${params.toString()}`,
     pageTitle: "Preenchimento de metas",
     showSidebar: false,
@@ -155,6 +161,14 @@ router.get("/manager/dashboard", async (req, res) => {
   // Se distinctUnits.length > 1, então ele tem múltiplas opções.
   const hasMultipleUnits = distinctUnits.length > 1;
 
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+  
+  // Permite edição apenas no mês atual ou futuro (conforme solicitado: meses passados apenas visualização)
+  // Ajuste essa lógica se quiser permitir edição de meses passados (ex: mês anterior até dia 5)
+  const isEditable = (year > currentYear) || (year === currentYear && month >= currentMonth);
+
   // Não precisamos mais passar params na URL do formAction se estivermos usando sessão
   // Mas manteremos o formAction apontando para o dashboard limpo
   
@@ -165,6 +179,7 @@ router.get("/manager/dashboard", async (req, res) => {
     month,
     businessUnit,
     hasMultipleUnits,
+    isEditable,
     formAction: `/manager/dashboard`, // URL limpa
     pageTitle: "Dashboard do Gestor",
     showSidebar: false, 

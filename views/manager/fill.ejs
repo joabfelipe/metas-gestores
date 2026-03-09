@@ -23,9 +23,19 @@
             <%= businessUnit %>
           </div>
         <% } %>
-        <div class="rounded-full border border-border px-3 py-1 text-xs text-muted">
-          <%= month %>/<%= year %>
-        </div>
+        <form action="<%= locals.formAction.split('?')[0] %>" method="GET" class="flex items-center m-0 p-0">
+          <% if (locals.businessUnit) { %>
+            <input type="hidden" name="businessUnit" value="<%= businessUnit %>">
+          <% } %>
+          <input 
+            type="month" 
+            name="period" 
+            value="<%= year %>-<%= String(month).padStart(2, '0') %>" 
+            class="rounded-full border border-border bg-transparent px-3 py-1 text-xs text-muted focus:border-primary focus:ring-0 cursor-pointer w-auto h-auto leading-none"
+            onchange="this.form.submit()"
+            title="Selecione o mês"
+          />
+        </form>
       </div>
     </div>
     <div class="card-body">
@@ -61,7 +71,9 @@
                   <th>Alvo</th>
                   <th>Atingido</th>
                   <th>Plano de ação</th>
+                  <% if (isEditable) { %>
                   <th class="w-[80px] text-center">Salvar</th>
+                  <% } %>
                 </tr>
               </thead>
               <tbody>
@@ -72,7 +84,7 @@
                   <% if (currentDepartment !== g.department) { %>
                     <% currentDepartment = g.department; %>
                     <tr class="bg-muted/5 border-t border-b">
-                      <td colspan="5" class="py-3 px-4 font-bold text-base text-primary uppercase tracking-wide">
+                      <td colspan="<%= isEditable ? 5 : 4 %>" class="py-3 px-4 font-bold text-base text-primary uppercase tracking-wide">
                         <%= currentDepartment || 'Geral' %>
                       </td>
                     </tr>
@@ -84,25 +96,29 @@
                     </td>
                     <td data-label="Alvo"><%= g.targetValue %> <%= g.unit %></td>
                     <td data-label="Atingido">
-                      <input type="number" step="0.01" name="achievedValue[]" value="<%= g.achievedValue ?? "" %>" placeholder="Valor" class="input w-full min-w-[100px]" />
+                      <input type="number" step="0.01" name="achievedValue[]" value="<%= g.achievedValue ?? "" %>" placeholder="Valor" class="input w-full min-w-[100px]" <%= !isEditable ? 'disabled' : '' %> />
                     </td>
                     <td data-label="Plano de ação">
-                      <textarea name="actionPlan[]" rows="2" placeholder="Descreva o plano de ação..." class="textarea min-w-[200px]"><%= g.actionPlan || "" %></textarea>
+                      <textarea name="actionPlan[]" rows="2" placeholder="Descreva o plano de ação..." class="textarea min-w-[200px]" <%= !isEditable ? 'disabled' : '' %>><%= g.actionPlan || "" %></textarea>
                     </td>
+                    <% if (isEditable) { %>
                     <td data-label="Salvar" class="text-center align-middle">
                       <button type="button" class="btn btn-ghost btn-sm btn-save-row text-primary hover:bg-primary/10" title="Salvar individualmente">
                         💾
                       </button>
                     </td>
+                    <% } %>
                   </tr>
                 <% }) %>
               </tbody>
             </table>
           </div>
 
+          <% if (isEditable) { %>
           <div class="flex justify-end gap-3">
             <%- include("../partials/components/button", { type: "submit", label: "Salvar Tudo", variant: "btn-primary" }) %>
           </div>
+          <% } %>
         </form>
       </div>
     </div>
