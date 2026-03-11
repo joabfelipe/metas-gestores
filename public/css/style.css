@@ -449,12 +449,13 @@ input[type="email"],
 input[type="password"],
 input[type="number"],
 input[type="search"],
+input[type="month"],
 select,
 textarea {
   width: 100%;
   background: rgba(255,255,255,0.03);
   border: 1px solid var(--border);
-  color: var(--text);
+  color: #e8edf3;
   font-family: var(--font-mono);
   font-size: 12px;
   padding: 9px 12px;
@@ -707,6 +708,36 @@ label {
 .sm\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
 .lg\:grid-cols-5 { grid-template-columns: repeat(5, 1fr); }
 .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+
+
+/* ── input[type=month] — picker nativo ──────────────────────── */
+input[type="month"] {
+  color-scheme: dark;
+  cursor: pointer;
+}
+
+input[type="month"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.7) sepia(1) saturate(3) hue-rotate(115deg);
+  cursor: pointer;
+  opacity: 0.8;
+  padding-left: 4px;
+}
+
+input[type="month"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+/* ── Células de tabela com cor forte ─────────────────────────── */
+.table td,
+.table th,
+.table td input,
+.table td select {
+  color: #e8edf3;
+}
+
+.table th {
+  color: var(--text-muted);
+}
 
 /* ── Animations ──────────────────────────────────────────────── */
 @keyframes pulse {
