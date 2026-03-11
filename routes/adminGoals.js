@@ -167,13 +167,12 @@ router.get("/admin/goals/export", isAdmin, asyncHandler(async (req, res) => {
 
 // Cria meta
 router.post("/admin/goals", isAdmin, asyncHandler(async (req, res) => {
-  const { managerId, title, description, targetValue, unit, period, department } = req.body;
+  const { managerId, title, targetValue, unit, period, department } = req.body;
   const [year, month] = period.split("-").map(Number);
 
   await Goal.create({
     managerId,
     title,
-    description,
     targetValue,
     businessUnit: req.body.businessUnit || "",
     department: department || "",
