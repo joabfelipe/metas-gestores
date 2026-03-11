@@ -1,6 +1,7 @@
 const express = require("express");
 const Manager = require("../models/Manager");
 const Goal = require("../models/Goal");
+const parsePeriod = require("../utils/parsePeriod");
 
 const router = express.Router();
 
@@ -15,16 +16,7 @@ const asyncHandler = (fn) => (req, res, next) =>
 router.get("/g/:token", asyncHandler(async (req, res) => {
   const { token } = req.params;
   
-  const now = new Date();
-  let year = now.getFullYear();
-  let month = now.getMonth() + 1;
-
-  if (req.query.period) {
-    [year, month] = req.query.period.split("-").map(Number);
-  } else if (req.query.year || req.query.month) {
-    year = Number(req.query.year || now.getFullYear());
-    month = Number(req.query.month || (now.getMonth() + 1));
-  }
+  const { year, month } = parsePeriod(req.query);
 
   const businessUnit = req.query.businessUnit || "";
 
@@ -78,16 +70,7 @@ router.get("/manager/dashboard", asyncHandler(async (req, res) => {
   const manager = await Manager.findById(req.session.user.id);
   if (!manager) return res.redirect("/login");
 
-  const now = new Date();
-  let year = now.getFullYear();
-  let month = now.getMonth() + 1;
-
-  if (req.query.period) {
-    [year, month] = req.query.period.split("-").map(Number);
-  } else if (req.query.year || req.query.month) {
-    year = Number(req.query.year || now.getFullYear());
-    month = Number(req.query.month || (now.getMonth() + 1));
-  }
+  const { year, month } = parsePeriod(req.query);
 
   // Tenta pegar do query param OU da sessão
   let businessUnit = req.query.businessUnit || req.session.selectedUnit || "";
@@ -245,16 +228,7 @@ router.post("/manager/dashboard", asyncHandler(async (req, res) => {
   const manager = await Manager.findById(req.session.user.id);
   if (!manager) return res.redirect("/login");
 
-  const now = new Date();
-  let year = now.getFullYear();
-  let month = now.getMonth() + 1;
-
-  if (req.query.period) {
-    [year, month] = req.query.period.split("-").map(Number);
-  } else if (req.query.year || req.query.month) {
-    year = Number(req.query.year || now.getFullYear());
-    month = Number(req.query.month || (now.getMonth() + 1));
-  }
+  const { year, month } = parsePeriod(req.query);
 
   const businessUnit = req.query.businessUnit || "";
 
@@ -307,16 +281,7 @@ router.post("/manager/dashboard", asyncHandler(async (req, res) => {
 router.post("/g/:token", asyncHandler(async (req, res) => {
   const { token } = req.params;
   
-  const now = new Date();
-  let year = now.getFullYear();
-  let month = now.getMonth() + 1;
-
-  if (req.query.period) {
-    [year, month] = req.query.period.split("-").map(Number);
-  } else if (req.query.year || req.query.month) {
-    year = Number(req.query.year || now.getFullYear());
-    month = Number(req.query.month || (now.getMonth() + 1));
-  }
+  const { year, month } = parsePeriod(req.query);
 
   const businessUnit = req.query.businessUnit || "";
 
