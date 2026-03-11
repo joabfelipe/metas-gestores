@@ -14,6 +14,7 @@ const expressLayouts = require("express-ejs-layouts");
 const mongoose = require("mongoose");
 const path = require("path");
 const session = require("express-session");
+const MongoStore = require("connect-mongo");
 const flash = require("connect-flash");
 const Manager = require("./models/Manager");
 
@@ -39,6 +40,11 @@ app.use(
     resave: false,
     saveUninitialized: false,
     cookie: { maxAge: 1000 * 60 * 60 * 24 }, // 1 dia
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URI,
+      collectionName: "sessions",
+      ttl: 60 * 60 * 24, // 1 dia em segundos
+    }),
   })
 );
 app.use(flash());
