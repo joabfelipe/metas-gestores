@@ -711,15 +711,25 @@ label {
 
 
 /* ── input[type=month] — picker nativo ──────────────────────── */
-input[type="month"] {
-  color-scheme: dark;
+/* Aplica em QUALQUER input[type=month], com ou sem classe .input */
+input[type="month"],
+input[type="month"].input {
+  color-scheme: dark !important;
+  color: #e8edf3 !important;
+  background: rgba(255,255,255,0.03) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
   cursor: pointer;
 }
+
+input[type="month"]::-webkit-datetime-edit { color: #e8edf3; }
+input[type="month"]::-webkit-datetime-edit-fields-wrapper { color: #e8edf3; }
+input[type="month"]::-webkit-datetime-edit-month-field { color: #e8edf3; }
+input[type="month"]::-webkit-datetime-edit-year-field  { color: #e8edf3; }
 
 input[type="month"]::-webkit-calendar-picker-indicator {
   filter: invert(0.7) sepia(1) saturate(3) hue-rotate(115deg);
   cursor: pointer;
-  opacity: 0.8;
+  opacity: 0.9;
   padding-left: 4px;
 }
 
@@ -727,17 +737,23 @@ input[type="month"]::-webkit-calendar-picker-indicator:hover {
   opacity: 1;
 }
 
-/* ── Células de tabela com cor forte ─────────────────────────── */
+/* ── Células de tabela e spans dentro delas ──────────────────── */
 .table td,
-.table th,
+.table td span,
 .table td input,
-.table td select {
-  color: #e8edf3;
+.table td select,
+.table td textarea,
+.table td .view-mode {
+  color: #e8edf3 !important;
 }
 
 .table th {
-  color: var(--text-muted);
+  color: rgb(90 100 120) !important;
 }
+
+/* Textos gerais que ficavam apagados */
+.text-foreground { color: #e8edf3 !important; }
+span.view-mode   { color: #e8edf3 !important; }
 
 /* ── Animations ──────────────────────────────────────────────── */
 @keyframes pulse {
