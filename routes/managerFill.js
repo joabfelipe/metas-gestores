@@ -10,7 +10,9 @@ const asyncHandler = (fn) => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch((err) => {
     console.error(err);
     req.flash("error_msg", "Ocorreu um erro inesperado. Tente novamente.");
-    res.redirect("back");
+    const ref = req.headers.referer || "";
+    const fallback = ref && !ref.endsWith("/back") && !ref.includes("undefined") ? ref : "/manager/dashboard";
+    res.redirect(fallback);
   });
 
 router.get("/g/:token", asyncHandler(async (req, res) => {
@@ -28,10 +30,9 @@ router.get("/g/:token", asyncHandler(async (req, res) => {
       filter.businessUnit = businessUnit;
   }
 
+  const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
-  // Permite edição apenas no mês atual ou futuro, ou até 2 meses passados
-  // Lógica: (ano_alvo - ano_atual) * 12 + (mes_alvo - mes_atual) >= -2
   const monthDiff = (year - currentYear) * 12 + (month - currentMonth);
   const isEditable = monthDiff >= -2;
 
@@ -179,6 +180,7 @@ router.get("/manager/dashboard", asyncHandler(async (req, res) => {
   // Se tiver mais de uma unidade possível, mostra o botão
   const hasMultipleUnits = allPossibleUnits.size > 1;
 
+  const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
   // Permite edição apenas no mês atual ou futuro, ou até 2 meses passados
