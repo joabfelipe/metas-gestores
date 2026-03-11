@@ -3,12 +3,13 @@ const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
 const Manager = require("../models/Manager");
+const isAdmin = require("../middleware/isAdmin");
 const Goal = require("../models/Goal");
 
 const router = express.Router();
 
 // Lista e cria gestores
-router.get("/admin/managers", async (req, res) => {
+router.get("/admin/managers", isAdmin, async (req, res) => {
   const managers = await Manager.find().sort({ "departments.0": 1, name: 1 });
   res.render("admin/managers", {
     managers,
@@ -23,7 +24,7 @@ router.get("/admin/managers", async (req, res) => {
   });
 });
 
-router.post("/admin/managers", async (req, res) => {
+router.post("/admin/managers", isAdmin, async (req, res) => {
   const { name, email, department, unit } = req.body;
   const accessToken = crypto.randomBytes(24).toString("hex");
   // Converte "Unidade A, Unidade B" para ["Unidade A", "Unidade B"]
@@ -34,7 +35,7 @@ router.post("/admin/managers", async (req, res) => {
   res.redirect("/admin/managers");
 });
 
-router.post("/admin/managers/:id/update", async (req, res) => {
+router.post("/admin/managers/:id/update", isAdmin, async (req, res) => {
   const { id } = req.params;
   const { name, email, department, unit } = req.body;
   
@@ -51,7 +52,7 @@ router.post("/admin/managers/:id/update", async (req, res) => {
   res.redirect("/admin/managers");
 });
 
-router.post("/admin/managers/:id/delete", async (req, res) => {
+router.post("/admin/managers/:id/delete", isAdmin, async (req, res) => {
   const { id } = req.params;
   await Goal.deleteMany({ managerId: id });
   await Manager.findByIdAndDelete(id);
@@ -59,7 +60,7 @@ router.post("/admin/managers/:id/delete", async (req, res) => {
 });
 
 // Lista metas (filtro por mês/ano/gestor)
-router.get("/admin/goals", async (req, res) => {
+router.get("/admin/goals", isAdmin, async (req, res) => {
   let year = 2026;
   let month = 1;
 
@@ -128,7 +129,7 @@ router.get("/admin/goals", async (req, res) => {
 });
 
 // Exporta metas para CSV
-router.get("/admin/goals/export", async (req, res) => {
+router.get("/admin/goals/export", isAdmin, async (req, res) => {
   let year = 2026;
   let month = 1;
 
@@ -206,7 +207,7 @@ router.get("/admin/goals/export", async (req, res) => {
   res.end(csvRows.join("\n"));
 });
 
-router.post("/admin/goals", async (req, res) => {
+router.post("/admin/goals", isAdmin, async (req, res) => {
   const { managerId, title, description, targetValue, unit, period, department } = req.body;
   const [year, month] = period.split("-").map(Number);
   
@@ -235,7 +236,7 @@ router.post("/admin/goals", async (req, res) => {
   res.redirect(`/admin/goals?${params.toString()}`);
 });
 
-router.post("/admin/goals/:id/update", async (req, res) => {
+router.post("/admin/goals/:id/update", isAdmin, async (req, res) => {
   const { id } = req.params;
   const { title, targetValue, unit, achievedValue, businessUnit, actionPlan, department } = req.body;
 
@@ -254,7 +255,7 @@ router.post("/admin/goals/:id/update", async (req, res) => {
   res.redirect("/admin/goals");
 });
 
-router.post("/admin/goals/batch-update", express.json(), async (req, res) => {
+router.post("/admin/goals/batch-update", isAdmin, express.json(), async (req, res) => {
     try {
         const { updates } = req.body;
         if (!updates || !Array.isArray(updates)) {
@@ -281,7 +282,7 @@ router.post("/admin/goals/batch-update", express.json(), async (req, res) => {
     }
 });
 
-router.post("/admin/goals/replicate", async (req, res) => {
+router.post("/admin/goals/replicate", isAdmin, async (req, res) => {
     const { period, managerId } = req.body;
     const [year, month] = period.split("-").map(Number);
     
@@ -331,7 +332,7 @@ router.post("/admin/goals/replicate", async (req, res) => {
     res.redirect(`/admin/goals?year=${year}&month=${month}&managerId=${managerId}`);
 });
 
-router.post("/admin/goals/replicate-advanced", async (req, res) => {
+router.post("/admin/goals/replicate-advanced", isAdmin, async (req, res) => {
     const { 
         sourcePeriod, 
         sourceManagerId, 
@@ -401,7 +402,7 @@ router.post("/admin/goals/replicate-advanced", async (req, res) => {
     res.redirect(`/admin/goals?year=${targetYear}&month=${targetMonth}&managerId=${targetManagerId || sourceManagerId}`);
 });
 
-router.post("/admin/goals/delete-all", async (req, res) => {
+router.post("/admin/goals/delete-all", isAdmin, async (req, res) => {
     const { period, managerId } = req.body;
     const [year, month] = period.split("-").map(Number);
 
@@ -414,7 +415,7 @@ router.post("/admin/goals/delete-all", async (req, res) => {
     res.redirect(`/admin/goals?year=${year}&month=${month}&managerId=${managerId}`);
 });
 
-router.post("/admin/goals/:id/delete", async (req, res) => {
+router.post("/admin/goals/:id/delete", isAdmin, async (req, res) => {
   const { id } = req.params;
   const goal = await Goal.findById(id);
   await Goal.findByIdAndDelete(id);
@@ -423,7 +424,7 @@ router.post("/admin/goals/:id/delete", async (req, res) => {
   res.redirect("/admin/goals"); 
 });
 
-router.get("/admin/managers/:id/link", async (req, res) => {
+router.get("/admin/managers/:id/link", isAdmin, async (req, res) => {
   const { id } = req.params;
   
   let year = 2026;
@@ -480,7 +481,7 @@ router.get("/admin/managers/:id/link", async (req, res) => {
 });
 
 // Gera credenciais e envia por email
-router.post("/admin/managers/:id/generate-credentials", async (req, res) => {
+router.post("/admin/managers/:id/generate-credentials", isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const manager = await Manager.findById(id);
