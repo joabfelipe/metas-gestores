@@ -6,7 +6,8 @@ const Manager = require("../models/Manager");
 // Render Login Page
 router.get("/login", (req, res) => {
   if (req.session.user) {
-    return res.redirect("/manager/dashboard");
+    const dest = req.session.user.role === "admin" ? "/admin/managers" : "/manager/dashboard";
+    return res.redirect(dest);
   }
   res.render("auth/login", { layout: "layouts/auth" });
 });
@@ -38,7 +39,7 @@ router.post("/login", async (req, res) => {
       id: manager._id,
       name: manager.name,
       email: manager.email,
-      role: "manager", // or check if admin
+      role: manager.isAdmin ? "admin" : "manager",
       mustChangePassword: manager.mustChangePassword
     };
 
@@ -48,7 +49,8 @@ router.post("/login", async (req, res) => {
     }
 
     req.flash("success_msg", "Login realizado com sucesso!");
-    res.redirect("/manager/dashboard"); // New dashboard route
+    const destination = manager.isAdmin ? "/admin/managers" : "/manager/dashboard";
+    res.redirect(destination);
   } catch (err) {
     console.error(err);
     req.flash("error_msg", "Erro ao realizar login.");
@@ -89,7 +91,8 @@ router.post("/change-password", async (req, res) => {
 
     req.session.user.mustChangePassword = false;
     req.flash("success_msg", "Senha alterada com sucesso!");
-    res.redirect("/manager/dashboard");
+    const dest = req.session.user.role === "admin" ? "/admin/managers" : "/manager/dashboard";
+    res.redirect(dest);
   } catch (err) {
     console.error(err);
     req.flash("error_msg", "Erro ao alterar senha.");
