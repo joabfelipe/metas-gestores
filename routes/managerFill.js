@@ -4,7 +4,15 @@ const Goal = require("../models/Goal");
 
 const router = express.Router();
 
-router.get("/g/:token", async (req, res) => {
+// Wrapper para capturar erros em rotas async sem repetir try/catch
+const asyncHandler = (fn) => (req, res, next) =>
+  Promise.resolve(fn(req, res, next)).catch((err) => {
+    console.error(err);
+    req.flash("error_msg", "Ocorreu um erro inesperado. Tente novamente.");
+    res.redirect("back");
+  });
+
+router.get("/g/:token", asyncHandler(async (req, res) => {
   const { token } = req.params;
   
   const now = new Date();
@@ -55,10 +63,10 @@ router.get("/g/:token", async (req, res) => {
     breadcrumbs: [{ label: "Metas" }],
     topbarMeta: "Gestor"
   });
-});
+}));
 
 // Rota autenticada para gestores
-router.get("/manager/dashboard", async (req, res) => {
+router.get("/manager/dashboard", asyncHandler(async (req, res) => {
   if (!req.session.user || req.session.user.role !== 'manager') {
     return res.redirect("/login");
   }
@@ -214,7 +222,7 @@ router.get("/manager/dashboard", async (req, res) => {
     breadcrumbs: [{ label: "Dashboard" }],
     topbarMeta: "Gestor"
   });
-});
+}));
 
 // Nova rota POST para selecionar unidade e limpar URL
 router.post("/manager/select-unit", (req, res) => {
@@ -225,7 +233,7 @@ router.post("/manager/select-unit", (req, res) => {
     res.redirect(`/manager/dashboard?period=${period}`);
 });
 
-router.post("/manager/dashboard", async (req, res) => {
+router.post("/manager/dashboard", asyncHandler(async (req, res) => {
   if (!req.session.user || req.session.user.role !== 'manager') {
     return res.redirect("/login");
   }
@@ -294,9 +302,9 @@ router.post("/manager/dashboard", async (req, res) => {
       redirectUrl += `&businessUnit=${encodeURIComponent(businessUnit)}`;
   }
   res.redirect(redirectUrl);
-});
+}));
 
-router.post("/g/:token", async (req, res) => {
+router.post("/g/:token", asyncHandler(async (req, res) => {
   const { token } = req.params;
   
   const now = new Date();
@@ -351,10 +359,10 @@ router.post("/g/:token", async (req, res) => {
     breadcrumbs: [{ label: "Confirmação" }],
     topbarMeta: "Gestor"
   });
-});
+}));
 
 // AJAX route for individual goal saving (Session)
-router.post("/manager/save-goal", async (req, res) => {
+router.post("/manager/save-goal", asyncHandler(async (req, res) => {
   if (!req.session.user || req.session.user.role !== 'manager') {
     return res.status(401).json({ error: "Não autorizado" });
   }
@@ -378,10 +386,10 @@ router.post("/manager/save-goal", async (req, res) => {
   );
 
   res.json({ success: true });
-});
+}));
 
 // AJAX route for individual goal saving (Token)
-router.post("/g/:token/save-goal", async (req, res) => {
+router.post("/g/:token/save-goal", asyncHandler(async (req, res) => {
   const { token } = req.params;
   const manager = await Manager.findOne({ accessToken: token });
   if (!manager) return res.status(401).json({ error: "Token inválido" });
@@ -402,6 +410,6 @@ router.post("/g/:token/save-goal", async (req, res) => {
   );
 
   res.json({ success: true });
-});
+}));
 
 module.exports = router;
