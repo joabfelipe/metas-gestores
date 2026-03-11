@@ -9,6 +9,7 @@ const ManagerSchema = new mongoose.Schema(
     accessToken: { type: String, required: true, unique: true },
     password: { type: String },
     mustChangePassword: { type: Boolean, default: true },
+    isAdmin: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
