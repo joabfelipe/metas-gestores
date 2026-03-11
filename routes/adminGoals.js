@@ -14,7 +14,8 @@ const asyncHandler = (fn) => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch((err) => {
     console.error(err);
     req.flash("error_msg", "Ocorreu um erro inesperado. Tente novamente.");
-    res.redirect("back");
+    const fallback = req.headers.referer && !req.headers.referer.endsWith("/back") ? req.headers.referer : "/admin/managers";
+    res.redirect(fallback);
   });
 
 // Lista gestores
