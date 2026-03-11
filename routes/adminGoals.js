@@ -5,6 +5,7 @@ const nodemailer = require("nodemailer");
 const Manager = require("../models/Manager");
 const isAdmin = require("../middleware/isAdmin");
 const Goal = require("../models/Goal");
+const parsePeriod = require("../utils/parsePeriod");
 
 const router = express.Router();
 
@@ -66,17 +67,7 @@ router.post("/admin/managers/:id/delete", isAdmin, asyncHandler(async (req, res)
 // Lista metas com filtros
 router.get("/admin/goals", isAdmin, asyncHandler(async (req, res) => {
   const now = new Date();
-  let year = now.getFullYear();
-  let month = now.getMonth() + 1;
-
-  if (req.query.period) {
-    const parts = req.query.period.split("-");
-    year = Number(parts[0]);
-    month = Number(parts[1]);
-  } else if (req.query.year && req.query.month) {
-    year = Number(req.query.year);
-    month = Number(req.query.month);
-  }
+  const { year, month } = parsePeriod(req.query);
 
   const managerId = req.query.managerId || "";
   const businessUnit = req.query.businessUnit || "";
@@ -125,17 +116,7 @@ router.get("/admin/goals", isAdmin, asyncHandler(async (req, res) => {
 // Exporta metas para CSV
 router.get("/admin/goals/export", isAdmin, asyncHandler(async (req, res) => {
   const now = new Date();
-  let year = now.getFullYear();
-  let month = now.getMonth() + 1;
-
-  if (req.query.period) {
-    const parts = req.query.period.split("-");
-    year = Number(parts[0]);
-    month = Number(parts[1]);
-  } else if (req.query.year && req.query.month) {
-    year = Number(req.query.year);
-    month = Number(req.query.month);
-  }
+  const { year, month } = parsePeriod(req.query);
 
   const managerId = req.query.managerId || "";
   const businessUnit = req.query.businessUnit || "";
@@ -376,17 +357,7 @@ router.post("/admin/goals/:id/delete", isAdmin, asyncHandler(async (req, res) =>
 // Exibe link de acesso do gestor
 router.get("/admin/managers/:id/link", isAdmin, asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const now = new Date();
-
-  let year = now.getFullYear();
-  let month = now.getMonth() + 1;
-
-  if (req.query.period) {
-    [year, month] = req.query.period.split("-").map(Number);
-  } else {
-    year = Number(req.query.year || year);
-    month = Number(req.query.month || month);
-  }
+  const { year, month } = parsePeriod(req.query);
 
   const businessUnit = req.query.businessUnit || "";
 
