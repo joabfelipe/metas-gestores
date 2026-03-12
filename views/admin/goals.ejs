@@ -13,7 +13,7 @@
       <form method="get" action="/admin/goals" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 items-end">
         <div class="field">
           <label class="field-label">Período</label>
-          <input type="month" name="period" value="<%= year %>-<%= String(month).padStart(2, '0') %>" class="input" required />
+          <input type="month" name="period" value="<%= year %>-<%= String(month).padStart(2, '0') %>" class="input" data-picker="month" required />
         </div>
         <div class="field">
           <label class="field-label">Gestor</label>
@@ -76,7 +76,7 @@
           <div class="grid gap-4 sm:grid-cols-2">
             <div class="field sm:col-span-2">
                 <label class="field-label">Período *</label>
-                <input type="month" name="sourcePeriod" value="<%= year %>-<%= String(month).padStart(2, '0') %>" class="input" required />
+                <input type="month" name="sourcePeriod" value="<%= year %>-<%= String(month).padStart(2, '0') %>" class="input" data-picker="month" required />
             </div>
             
             <div class="field">
@@ -120,7 +120,7 @@
           <div class="grid gap-4 sm:grid-cols-2">
             <div class="field sm:col-span-2">
                 <label class="field-label">Novo Período *</label>
-                <input type="month" name="targetPeriod" class="input" required />
+                <input type="month" name="targetPeriod" class="input" data-picker="month" required />
             </div>
             
             <div class="field">
@@ -172,7 +172,7 @@
       <form method="post" action="/admin/goals" class="grid gap-4 lg:grid-cols-6 items-end">
         <div class="field lg:col-span-2">
           <label class="field-label">Período</label>
-          <input type="month" name="period" value="<%= year %>-<%= String(month).padStart(2, '0') %>" class="input" required />
+          <input type="month" name="period" value="<%= year %>-<%= String(month).padStart(2, '0') %>" class="input" data-picker="month" required />
         </div>
         <div class="field lg:col-span-2">
           <label class="field-label">Gestor</label>

@@ -62,6 +62,118 @@
         sidebarToggle.addEventListener("click", openSidebar);
         sidebarOverlay.addEventListener("click", closeSidebar);
       }
+
+      const supportsMonthInput = (() => {
+        const input = document.createElement("input");
+        input.setAttribute("type", "month");
+        return input.type === "month";
+      })();
+
+      const monthNames = [
+        "Jan",
+        "Fev",
+        "Mar",
+        "Abr",
+        "Mai",
+        "Jun",
+        "Jul",
+        "Ago",
+        "Set",
+        "Out",
+        "Nov",
+        "Dez",
+      ];
+
+      const enhanceMonthPicker = (el) => {
+        if (typeof el.showPicker === "function") {
+          el.addEventListener("click", () => el.showPicker());
+        }
+      };
+
+      const toPeriodValue = (year, month) => {
+        const mm = String(month).padStart(2, "0");
+        return `${year}-${mm}`;
+      };
+
+      const parsePeriodValue = (value) => {
+        const match = /^\s*(\d{4})-(\d{2})\s*$/.exec(String(value || ""));
+        if (!match) return null;
+        const y = Number(match[1]);
+        const m = Number(match[2]);
+        if (!Number.isFinite(y) || !Number.isFinite(m) || m < 1 || m > 12) return null;
+        return { year: y, month: m };
+      };
+
+      const buildMonthFallback = (input) => {
+        const now = new Date();
+        const current = {
+          year: now.getFullYear(),
+          month: now.getMonth() + 1,
+        };
+
+        const parsed = parsePeriodValue(input.value) || current;
+
+        const wrapper = document.createElement("span");
+        wrapper.className = "inline-flex items-center gap-2";
+
+        const monthSelect = document.createElement("select");
+        monthSelect.className = input.className;
+
+        const yearSelect = document.createElement("select");
+        yearSelect.className = input.className;
+
+        const hidden = document.createElement("input");
+        hidden.type = "hidden";
+        hidden.name = input.getAttribute("name") || "period";
+        hidden.value = toPeriodValue(parsed.year, parsed.month);
+        if (input.hasAttribute("required")) hidden.required = true;
+
+        for (let m = 1; m <= 12; m++) {
+          const opt = document.createElement("option");
+          opt.value = String(m);
+          opt.textContent = monthNames[m - 1];
+          if (m === parsed.month) opt.selected = true;
+          monthSelect.appendChild(opt);
+        }
+
+        const startYear = current.year - 5;
+        const endYear = current.year + 2;
+        for (let y = startYear; y <= endYear; y++) {
+          const opt = document.createElement("option");
+          opt.value = String(y);
+          opt.textContent = String(y);
+          if (y === parsed.year) opt.selected = true;
+          yearSelect.appendChild(opt);
+        }
+
+        const apply = () => {
+          const y = Number(yearSelect.value);
+          const m = Number(monthSelect.value);
+          hidden.value = toPeriodValue(y, m);
+        };
+
+        const autoSubmit = input.getAttribute("data-auto-submit") === "true" ||
+          String(input.getAttribute("onchange") || "").includes("submit");
+
+        const onChange = () => {
+          apply();
+          if (autoSubmit && input.form) input.form.submit();
+        };
+
+        monthSelect.addEventListener("change", onChange);
+        yearSelect.addEventListener("change", onChange);
+
+        wrapper.appendChild(hidden);
+        wrapper.appendChild(monthSelect);
+        wrapper.appendChild(yearSelect);
+
+        input.replaceWith(wrapper);
+      };
+
+      document.querySelectorAll("[data-picker='month']").forEach((el) => {
+        enhanceMonthPicker(el);
+        if (!supportsMonthInput) buildMonthFallback(el);
+      });
     </script>
   </body>
 </html>
