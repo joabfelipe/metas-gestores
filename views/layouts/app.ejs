@@ -63,12 +63,6 @@
         sidebarOverlay.addEventListener('click', close);
       }
 
-      const supportsMonthInput = (() => {
-        const input = document.createElement("input");
-        input.setAttribute("type", "month");
-        return input.type === "month";
-      })();
-
       const monthNames = [
         "Jan",
         "Fev",
@@ -83,12 +77,6 @@
         "Nov",
         "Dez",
       ];
-
-      const enhanceMonthPicker = (el) => {
-        if (typeof el.showPicker === "function") {
-          el.addEventListener("click", () => el.showPicker());
-        }
-      };
 
       const toPeriodValue = (year, month) => {
         const mm = String(month).padStart(2, "0");
@@ -105,6 +93,7 @@
       };
 
       const buildMonthFallback = (input) => {
+        const form = input.form;
         const now = new Date();
         const current = {
           year: now.getFullYear(),
@@ -127,6 +116,11 @@
         hidden.name = input.getAttribute("name") || "period";
         hidden.value = toPeriodValue(parsed.year, parsed.month);
         if (input.hasAttribute("required")) hidden.required = true;
+        if (input.disabled) {
+          hidden.disabled = true;
+          monthSelect.disabled = true;
+          yearSelect.disabled = true;
+        }
 
         for (let m = 1; m <= 12; m++) {
           const opt = document.createElement("option");
@@ -157,7 +151,7 @@
 
         const onChange = () => {
           apply();
-          if (autoSubmit && input.form) input.form.submit();
+          if (autoSubmit && form) form.submit();
         };
 
         monthSelect.addEventListener("change", onChange);
@@ -171,8 +165,7 @@
       };
 
       document.querySelectorAll("[data-picker='month']").forEach((el) => {
-        enhanceMonthPicker(el);
-        if (!supportsMonthInput) buildMonthFallback(el);
+        buildMonthFallback(el);
       });
     </script>
   </body>
