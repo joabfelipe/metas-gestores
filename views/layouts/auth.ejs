@@ -3,36 +3,565 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login - Nexus Goals</title>
-  <link href="/css/app.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <title>Nexus Goals — Autenticação</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #080c10;
+      --surface: #0d1117;
+      --border: rgba(255,255,255,0.07);
+      --border-glow: rgba(0, 200, 150, 0.35);
+      --accent: #00c896;
+      --accent-dim: rgba(0, 200, 150, 0.12);
+      --accent-mid: rgba(0, 200, 150, 0.5);
+      --text: #e8edf3;
+      --text-muted: #5a6478;
+      --text-sub: #8892a4;
+      --danger: #ff4d6d;
+      --danger-bg: rgba(255, 77, 109, 0.08);
+      --success: #00c896;
+      --success-bg: rgba(0, 200, 150, 0.08);
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,200,150,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,200,150,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      top: -200px;
+      right: -200px;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(0,200,150,0.08) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .scene {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 480px 1fr;
+      align-items: center;
+    }
+
+    /* LEFT: Branding */
+    .brand-panel {
+      padding: 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 48px;
+      animation: fadeSlideLeft 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo-mark {
+      width: 44px;
+      height: 44px;
+      border: 1.5px solid var(--accent);
+      display: grid;
+      place-items: center;
+      position: relative;
+    }
+
+    .logo-mark::before {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      border: 1px solid rgba(0,200,150,0.3);
+    }
+
+    .logo-mark svg {
+      width: 20px;
+      height: 20px;
+      color: var(--accent);
+    }
+
+    .logo-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+
+    .logo-name span { color: var(--accent); }
+
+    .brand-headline {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(28px, 3vw, 48px);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-headline em {
+      font-style: normal;
+      color: var(--accent);
+      display: block;
+    }
+
+    .brand-stats {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .stat-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      background: rgba(13,17,23,0.6);
+      position: relative;
+      animation: fadeSlideLeft 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    .stat-row:nth-child(1) { animation-delay: 0.15s; }
+    .stat-row:nth-child(2) { animation-delay: 0.25s; }
+    .stat-row:nth-child(3) { animation-delay: 0.35s; }
+
+    .stat-row::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 2px;
+      background: var(--accent);
+    }
+
+    .stat-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: 0 0 8px var(--accent);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .stat-value {
+      margin-left: auto;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--accent);
+    }
+
+    /* CENTER: Form card */
+    .form-panel {
+      padding: 20px 0;
+      animation: fadeSlideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+    }
+
+    .form-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 48px 40px;
+      position: relative;
+    }
+
+    .form-card::before,
+    .form-card::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-color: var(--accent);
+      border-style: solid;
+    }
+    .form-card::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+    .form-card::after  { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+    .form-header { margin-bottom: 32px; }
+
+    .form-tag {
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .form-tag::before {
+      content: '';
+      display: block;
+      width: 24px;
+      height: 1px;
+      background: var(--accent);
+    }
+
+    .form-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .form-subtitle {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Alerts */
+    .alert {
+      padding: 11px 14px;
+      margin-bottom: 20px;
+      font-size: 12px;
+      border-left: 2px solid;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: fadeSlideUp 0.3s ease both;
+    }
+
+    .alert-error   { background: var(--danger-bg);  border-color: var(--danger);  color: var(--danger); }
+    .alert-success { background: var(--success-bg); border-color: var(--success); color: var(--success); }
+
+    /* Fields */
+    .field { margin-bottom: 18px; }
+
+    .field label {
+      display: block;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-sub);
+      margin-bottom: 8px;
+    }
+
+    .field-wrap { position: relative; }
+
+    .field-wrap input {
+      width: 100%;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 14px;
+      padding: 13px 16px 13px 44px;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+      -webkit-appearance: none;
+      border-radius: 0;
+    }
+
+    .field-wrap input::placeholder { color: var(--text-muted); font-size: 12px; }
+
+    .field-wrap input:focus {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+      box-shadow: 0 0 0 1px var(--accent-mid), inset 0 0 20px rgba(0,200,150,0.03);
+    }
+
+    .field-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      width: 16px;
+      height: 16px;
+      pointer-events: none;
+      transition: color 0.2s;
+    }
+
+    .field-wrap:focus-within .field-icon { color: var(--accent); }
+
+    /* Button */
+    .btn-submit {
+      width: 100%;
+      margin-top: 24px;
+      padding: 15px 24px;
+      background: var(--accent);
+      color: #020804;
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      border: none;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.15s, box-shadow 0.2s;
+      border-radius: 0;
+    }
+
+    .btn-submit::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+      transition: left 0.4s;
+    }
+
+    .btn-submit:hover::before { left: 100%; }
+    .btn-submit:hover { box-shadow: 0 0 24px rgba(0,200,150,0.45); transform: translateY(-1px); }
+    .btn-submit:active { transform: translateY(0); }
+
+    /* Footer */
+    .form-footer {
+      margin-top: 24px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .security-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+    }
+
+    .security-badge svg { width: 12px; height: 12px; color: var(--accent); }
+
+    /* RIGHT: Decorative */
+    .deco-panel {
+      padding: 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 14px;
+      animation: fadeSlideRight 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+    }
+
+    .deco-line {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border-glow), transparent);
+      animation: scanline 3s ease-in-out infinite;
+    }
+
+    .deco-line:nth-child(1) { width: 100%; animation-delay: 0s; }
+    .deco-line:nth-child(2) { width: 70%;  animation-delay: 0.4s; }
+    .deco-line:nth-child(3) { width: 45%;  animation-delay: 0.8s; }
+    .deco-line:nth-child(4) { width: 60%;  animation-delay: 1.2s; }
+    .deco-line:nth-child(5) { width: 30%;  animation-delay: 1.6s; }
+
+    .deco-code {
+      margin-top: 24px;
+      font-size: 10px;
+      color: var(--text-muted);
+      line-height: 1.9;
+      text-align: right;
+      letter-spacing: 0.04em;
+    }
+
+    .deco-code .hl { color: var(--accent); }
+    .deco-code .dim { color: #1e2733; }
+
+    /* Status bar */
+    .statusbar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 30px;
+      border-top: 1px solid var(--border);
+      background: rgba(8,12,16,0.97);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 20px;
+      font-size: 10px;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+      z-index: 10;
+    }
+
+    .status-item { display: flex; align-items: center; gap: 6px; }
+
+    .status-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 6px var(--accent);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    /* Animations */
+    @keyframes pulse    { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    @keyframes scanline { 0%,100%{opacity:0.3} 50%{opacity:1} }
+    @keyframes fadeSlideUp    { from{opacity:0;transform:translateY(24px)}  to{opacity:1;transform:translateY(0)} }
+    @keyframes fadeSlideLeft  { from{opacity:0;transform:translateX(-24px)} to{opacity:1;transform:translateX(0)} }
+    @keyframes fadeSlideRight { from{opacity:0;transform:translateX(24px)}  to{opacity:1;transform:translateX(0)} }
+
+    @media (max-width: 900px) {
+      .scene { grid-template-columns: 1fr; padding: 40px 24px 56px; }
+      .brand-panel, .deco-panel { display: none; }
+      .form-panel { padding: 0; }
+    }
+  </style>
 </head>
-<body class="bg-gray-50 flex items-center justify-center min-h-screen">
-  <div class="w-full max-w-md bg-white rounded-lg shadow-md p-8">
-    <div class="mb-6 text-center">
-      <h1 class="text-2xl font-bold text-gray-900">Nexus Goals</h1>
-      <p class="text-gray-500 mt-2">Acesse sua conta</p>
+<body>
+
+<div class="scene">
+
+  <!-- LEFT -->
+  <div class="brand-panel">
+    <div class="brand-logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+          <polyline points="16 7 22 7 22 13"/>
+        </svg>
+      </div>
+      <div class="logo-name">Nexus<span>Goals</span></div>
     </div>
 
-    <% if (success_msg && success_msg.length > 0) { %>
-      <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
-        <span class="block sm:inline"><%= success_msg %></span>
-      </div>
-    <% } %>
+    <div class="brand-headline">
+      Performance<br>em tempo<br><em>real.</em>
+    </div>
 
-    <% if (error_msg && error_msg.length > 0) { %>
-      <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-        <span class="block sm:inline"><%= error_msg %></span>
+    <div class="brand-stats">
+      <div class="stat-row">
+        <div class="stat-dot"></div>
+        <span class="stat-label">Sistema</span>
+        <span class="stat-value">ONLINE</span>
       </div>
-    <% } %>
-
-    <% if (error && error.length > 0) { %>
-      <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-        <span class="block sm:inline"><%= error %></span>
+      <div class="stat-row">
+        <div class="stat-dot" style="animation-delay:.6s"></div>
+        <span class="stat-label">Banco de dados</span>
+        <span class="stat-value">CONECTADO</span>
       </div>
-    <% } %>
-
-    <%- body %>
+      <div class="stat-row">
+        <div class="stat-dot" style="animation-delay:1.2s"></div>
+        <span class="stat-label">Sessão segura</span>
+        <span class="stat-value">TLS 1.3</span>
+      </div>
+    </div>
   </div>
+
+  <!-- CENTER -->
+  <div class="form-panel">
+    <div class="form-card">
+
+      <div class="form-header">
+        <div class="form-tag">Autenticação</div>
+        <div class="form-title"><%- typeof pageTitle !== 'undefined' ? pageTitle : 'Acesse o painel' %></div>
+        <div class="form-subtitle">Credenciais fornecidas pelo administrador</div>
+      </div>
+
+      <% if (success_msg && success_msg.length > 0) { %>
+        <div class="alert alert-success">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          <%= success_msg %>
+        </div>
+      <% } %>
+
+      <% if (error_msg && error_msg.length > 0) { %>
+        <div class="alert alert-error">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <%= error_msg %>
+        </div>
+      <% } %>
+
+      <% if (error && error.length > 0) { %>
+        <div class="alert alert-error">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <%= error %>
+        </div>
+      <% } %>
+
+      <%- body %>
+
+      <div class="form-footer">
+        <div class="security-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          Conexão criptografada
+        </div>
+        <div class="security-badge" style="margin-left:auto; opacity:0.5;">
+          v2.0 &nbsp;·&nbsp; Nexus Goals
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="deco-panel">
+    <div class="deco-line"></div>
+    <div class="deco-line"></div>
+    <div class="deco-line"></div>
+    <div class="deco-line"></div>
+    <div class="deco-line"></div>
+
+    <div class="deco-code">
+      <span class="hl">const</span> session = await<br>
+      auth.<span class="hl">verify</span>(credentials)<br>
+      &nbsp;&nbsp;.then(user => user.<span class="hl">grant</span>())<br>
+      &nbsp;&nbsp;.catch(err => <span class="hl">deny</span>());<br><br>
+      <span class="dim">// secure · encrypted · monitored</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- Status bar -->
+<div class="statusbar">
+  <div class="status-item">
+    <div class="status-dot"></div>
+    <span>NEXUS GOALS</span>
+  </div>
+  <div class="status-item">
+    <div class="status-dot" style="animation-delay:.5s"></div>
+    <span>TODOS OS SISTEMAS OPERACIONAIS</span>
+  </div>
+  <div class="status-item" style="margin-left:auto; opacity:.6;">
+    <span id="clock">--:--:--</span>
+  </div>
+</div>
+
+<script>
+  const clock = document.getElementById('clock');
+  function tick() { clock.textContent = new Date().toLocaleTimeString('pt-BR'); }
+  tick(); setInterval(tick, 1000);
+</script>
+
 </body>
 </html>

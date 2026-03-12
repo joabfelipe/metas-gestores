@@ -1,22 +1,24 @@
 const express = require("express");
 const Manager = require("../models/Manager");
 const Goal = require("../models/Goal");
+const parsePeriod = require("../utils/parsePeriod");
 
 const router = express.Router();
 
-router.get("/g/:token", async (req, res) => {
+// Wrapper para capturar erros em rotas async sem repetir try/catch
+const asyncHandler = (fn) => (req, res, next) =>
+  Promise.resolve(fn(req, res, next)).catch((err) => {
+    console.error(err);
+    req.flash("error_msg", "Ocorreu um erro inesperado. Tente novamente.");
+    const ref = req.headers.referer || "";
+    const fallback = ref && !ref.endsWith("/back") && !ref.includes("undefined") ? ref : "/manager/dashboard";
+    res.redirect(fallback);
+  });
+
+router.get("/g/:token", asyncHandler(async (req, res) => {
   const { token } = req.params;
   
-  const now = new Date();
-  let year = now.getFullYear();
-  let month = now.getMonth() + 1;
-
-  if (req.query.period) {
-    [year, month] = req.query.period.split("-").map(Number);
-  } else if (req.query.year || req.query.month) {
-    year = Number(req.query.year || now.getFullYear());
-    month = Number(req.query.month || (now.getMonth() + 1));
-  }
+  const { year, month } = parsePeriod(req.query);
 
   const businessUnit = req.query.businessUnit || "";
 
@@ -28,10 +30,9 @@ router.get("/g/:token", async (req, res) => {
       filter.businessUnit = businessUnit;
   }
 
+  const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
-  // Permite edição apenas no mês atual ou futuro, ou até 2 meses passados
-  // Lógica: (ano_alvo - ano_atual) * 12 + (mes_alvo - mes_atual) >= -2
   const monthDiff = (year - currentYear) * 12 + (month - currentMonth);
   const isEditable = monthDiff >= -2;
 
@@ -55,10 +56,10 @@ router.get("/g/:token", async (req, res) => {
     breadcrumbs: [{ label: "Metas" }],
     topbarMeta: "Gestor"
   });
-});
+}));
 
 // Rota autenticada para gestores
-router.get("/manager/dashboard", async (req, res) => {
+router.get("/manager/dashboard", asyncHandler(async (req, res) => {
   if (!req.session.user || req.session.user.role !== 'manager') {
     return res.redirect("/login");
   }
@@ -70,16 +71,7 @@ router.get("/manager/dashboard", async (req, res) => {
   const manager = await Manager.findById(req.session.user.id);
   if (!manager) return res.redirect("/login");
 
-  const now = new Date();
-  let year = now.getFullYear();
-  let month = now.getMonth() + 1;
-
-  if (req.query.period) {
-    [year, month] = req.query.period.split("-").map(Number);
-  } else if (req.query.year || req.query.month) {
-    year = Number(req.query.year || now.getFullYear());
-    month = Number(req.query.month || (now.getMonth() + 1));
-  }
+  const { year, month } = parsePeriod(req.query);
 
   // Tenta pegar do query param OU da sessão
   let businessUnit = req.query.businessUnit || req.session.selectedUnit || "";
@@ -188,6 +180,7 @@ router.get("/manager/dashboard", async (req, res) => {
   // Se tiver mais de uma unidade possível, mostra o botão
   const hasMultipleUnits = allPossibleUnits.size > 1;
 
+  const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
   // Permite edição apenas no mês atual ou futuro, ou até 2 meses passados
@@ -214,7 +207,7 @@ router.get("/manager/dashboard", async (req, res) => {
     breadcrumbs: [{ label: "Dashboard" }],
     topbarMeta: "Gestor"
   });
-});
+}));
 
 // Nova rota POST para selecionar unidade e limpar URL
 router.post("/manager/select-unit", (req, res) => {
@@ -225,7 +218,7 @@ router.post("/manager/select-unit", (req, res) => {
     res.redirect(`/manager/dashboard?period=${period}`);
 });
 
-router.post("/manager/dashboard", async (req, res) => {
+router.post("/manager/dashboard", asyncHandler(async (req, res) => {
   if (!req.session.user || req.session.user.role !== 'manager') {
     return res.redirect("/login");
   }
@@ -237,16 +230,7 @@ router.post("/manager/dashboard", async (req, res) => {
   const manager = await Manager.findById(req.session.user.id);
   if (!manager) return res.redirect("/login");
 
-  const now = new Date();
-  let year = now.getFullYear();
-  let month = now.getMonth() + 1;
-
-  if (req.query.period) {
-    [year, month] = req.query.period.split("-").map(Number);
-  } else if (req.query.year || req.query.month) {
-    year = Number(req.query.year || now.getFullYear());
-    month = Number(req.query.month || (now.getMonth() + 1));
-  }
+  const { year, month } = parsePeriod(req.query);
 
   const businessUnit = req.query.businessUnit || "";
 
@@ -294,21 +278,12 @@ router.post("/manager/dashboard", async (req, res) => {
       redirectUrl += `&businessUnit=${encodeURIComponent(businessUnit)}`;
   }
   res.redirect(redirectUrl);
-});
+}));
 
-router.post("/g/:token", async (req, res) => {
+router.post("/g/:token", asyncHandler(async (req, res) => {
   const { token } = req.params;
   
-  const now = new Date();
-  let year = now.getFullYear();
-  let month = now.getMonth() + 1;
-
-  if (req.query.period) {
-    [year, month] = req.query.period.split("-").map(Number);
-  } else if (req.query.year || req.query.month) {
-    year = Number(req.query.year || now.getFullYear());
-    month = Number(req.query.month || (now.getMonth() + 1));
-  }
+  const { year, month } = parsePeriod(req.query);
 
   const businessUnit = req.query.businessUnit || "";
 
@@ -351,10 +326,10 @@ router.post("/g/:token", async (req, res) => {
     breadcrumbs: [{ label: "Confirmação" }],
     topbarMeta: "Gestor"
   });
-});
+}));
 
 // AJAX route for individual goal saving (Session)
-router.post("/manager/save-goal", async (req, res) => {
+router.post("/manager/save-goal", asyncHandler(async (req, res) => {
   if (!req.session.user || req.session.user.role !== 'manager') {
     return res.status(401).json({ error: "Não autorizado" });
   }
@@ -378,10 +353,10 @@ router.post("/manager/save-goal", async (req, res) => {
   );
 
   res.json({ success: true });
-});
+}));
 
 // AJAX route for individual goal saving (Token)
-router.post("/g/:token/save-goal", async (req, res) => {
+router.post("/g/:token/save-goal", asyncHandler(async (req, res) => {
   const { token } = req.params;
   const manager = await Manager.findOne({ accessToken: token });
   if (!manager) return res.status(401).json({ error: "Token inválido" });
@@ -402,6 +377,6 @@ router.post("/g/:token/save-goal", async (req, res) => {
   );
 
   res.json({ success: true });
-});
+}));
 
 module.exports = router;

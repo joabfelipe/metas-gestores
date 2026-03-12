@@ -1,9 +1,20 @@
 require("dotenv").config();
+
+// Validação de variáveis de ambiente obrigatórias
+const REQUIRED_ENV = ["SESSION_SECRET", "MONGO_URI"];
+for (const key of REQUIRED_ENV) {
+  if (!process.env[key]) {
+    console.error(`❌ Variável de ambiente obrigatória não definida: ${key}`);
+    process.exit(1);
+  }
+}
+
 const express = require("express");
 const expressLayouts = require("express-ejs-layouts");
 const mongoose = require("mongoose");
 const path = require("path");
 const session = require("express-session");
+const MongoStore = require("connect-mongo");
 const flash = require("connect-flash");
 const Manager = require("./models/Manager");
 
@@ -25,10 +36,15 @@ app.use(express.static(path.join(__dirname, "public")));
 // Configuração de Sessão e Flash Messages
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "segredo_padrao_metas",
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: { maxAge: 1000 * 60 * 60 * 24 }, // 1 dia
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URI,
+      collectionName: "sessions",
+      ttl: 60 * 60 * 24, // 1 dia em segundos
+    }),
   })
 );
 app.use(flash());

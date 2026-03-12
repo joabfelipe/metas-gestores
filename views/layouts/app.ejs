@@ -1,66 +1,66 @@
 <!DOCTYPE html>
 <%
-  // Default values for layout variables to prevent ReferenceErrors
-  const _pageTitle = (typeof pageTitle !== 'undefined' && pageTitle) ? pageTitle : 'Nexus Goals';
-  const _breadcrumbs = (typeof breadcrumbs !== 'undefined' && breadcrumbs) ? breadcrumbs : [];
-  const _topbarActions = (typeof topbarActions !== 'undefined' && topbarActions) ? topbarActions : '';
-  const _showSidebar = (typeof showSidebar !== 'undefined') ? showSidebar : false;
-  const _currentPath = (typeof currentPath !== 'undefined' && currentPath) ? currentPath : '';
-  const _topbarMeta = (typeof topbarMeta !== 'undefined' && topbarMeta) ? topbarMeta : '';
+  const _pageTitle    = (typeof pageTitle    !== 'undefined' && pageTitle)    ? pageTitle    : 'Nexus Goals';
+  const _breadcrumbs  = (typeof breadcrumbs  !== 'undefined' && breadcrumbs)  ? breadcrumbs  : [];
+  const _topbarActions= (typeof topbarActions!== 'undefined' && topbarActions)? topbarActions: '';
+  const _showSidebar  = (typeof showSidebar  !== 'undefined')                 ? showSidebar  : false;
+  const _currentPath  = (typeof currentPath  !== 'undefined' && currentPath)  ? currentPath  : '';
+  const _topbarMeta   = (typeof topbarMeta   !== 'undefined' && topbarMeta)   ? topbarMeta   : '';
 %>
-<html>
+<html lang="pt-BR">
   <%- include("../partials/head", { title: _pageTitle }) %>
-  <body class="app-shell">
-    <div class="flex min-h-screen">
+  <body>
+    <div class="app-shell">
+
       <% if (_showSidebar) { %>
         <%- include("../partials/sidebar", { currentPath: _currentPath }) %>
       <% } %>
-      <div class="flex min-w-0 flex-1 flex-col">
-        <%- include("../partials/topbar", { 
-          pageTitle: _pageTitle, 
-          breadcrumbs: _breadcrumbs, 
-          topbarActions: _topbarActions, 
-          showSidebar: _showSidebar, 
-          topbarMeta: _topbarMeta 
+
+      <div class="app-main">
+        <%- include("../partials/topbar", {
+          pageTitle:     _pageTitle,
+          breadcrumbs:   _breadcrumbs,
+          topbarActions: _topbarActions,
+          showSidebar:   _showSidebar,
+          topbarMeta:    _topbarMeta
         }) %>
+
         <main class="app-content">
-          <div class="mx-auto w-full max-w-6xl">
-            <%- body %>
-          </div>
+          <% if (success_msg && success_msg.length > 0) { %>
+            <div class="alert alert-success" style="margin-bottom:20px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              <%= success_msg %>
+            </div>
+          <% } %>
+          <% if (error_msg && error_msg.length > 0) { %>
+            <div class="alert alert-error" style="margin-bottom:20px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <%= error_msg %>
+            </div>
+          <% } %>
+
+          <%- body %>
         </main>
+
         <%- include("../partials/footer") %>
       </div>
-    </div>
-    <% if (_showSidebar) { %>
-      <div id="sidebarOverlay" class="fixed inset-0 z-30 hidden bg-black/30 lg:hidden"></div>
-    <% } %>
-    <script>
-      const themeToggle = document.getElementById("themeToggle");
-      if (themeToggle) {
-        themeToggle.addEventListener("click", () => {
-          const root = document.documentElement;
-          const isDark = root.classList.toggle("dark");
-          localStorage.setItem("theme", isDark ? "dark" : "light");
-        });
-      }
 
-      const sidebar = document.getElementById("appSidebar");
-      const sidebarToggle = document.getElementById("sidebarToggle");
-      const sidebarOverlay = document.getElementById("sidebarOverlay");
+    </div>
+
+    <% if (_showSidebar) { %>
+      <div id="sidebarOverlay" class="hidden" style="position:fixed;inset:0;z-index:35;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);"></div>
+    <% } %>
+
+    <script>
+      const sidebar        = document.getElementById('appSidebar');
+      const sidebarToggle  = document.getElementById('sidebarToggle');
+      const sidebarOverlay = document.getElementById('sidebarOverlay');
 
       if (sidebarToggle && sidebar && sidebarOverlay) {
-        const openSidebar = () => {
-          sidebar.classList.remove("-translate-x-full");
-          sidebarOverlay.classList.remove("hidden");
-        };
-
-        const closeSidebar = () => {
-          sidebar.classList.add("-translate-x-full");
-          sidebarOverlay.classList.add("hidden");
-        };
-
-        sidebarToggle.addEventListener("click", openSidebar);
-        sidebarOverlay.addEventListener("click", closeSidebar);
+        const open  = () => { sidebar.classList.add('open');    sidebarOverlay.classList.remove('hidden'); };
+        const close = () => { sidebar.classList.remove('open'); sidebarOverlay.classList.add('hidden'); };
+        sidebarToggle.addEventListener('click', open);
+        sidebarOverlay.addEventListener('click', close);
       }
 
       const supportsMonthInput = (() => {

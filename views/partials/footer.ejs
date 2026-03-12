@@ -1,6 +1,14 @@
-<footer class="border-t border-border bg-surface/70 py-4">
-  <div class="mx-auto flex w-full max-w-6xl items-center justify-between px-4 text-xs text-muted sm:px-6 lg:px-8">
-    <span>Nexus Goals</span>
-    <span>UI atualizada</span>
-  </div>
+<footer class="app-footer">
+  <span>Nexus Goals</span>
+  <span style="margin-left:auto; display:flex; align-items:center; gap:16px;">
+    <span id="footer-clock" style="font-variant-numeric:tabular-nums;">--:--:--</span>
+    <span style="opacity:0.4;">v2.0</span>
+  </span>
 </footer>
+<script>
+  const fc = document.getElementById('footer-clock');
+  if (fc) {
+    function tickFooter() { fc.textContent = new Date().toLocaleTimeString('pt-BR'); }
+    tickFooter(); setInterval(tickFooter, 1000);
+  }
+</script>
