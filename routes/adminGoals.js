@@ -10,9 +10,7 @@ const parsePeriod = require("../utils/parsePeriod");
 const router = express.Router();
 
 // Rotas internas permitidas como fallback de redirecionamento
-const SAFE_FALLBACKS = ["/admin/managers", "/admin/goals"];
-
-// Wrapper para capturar erros em rotas async sem repetir try/catch
+const SAFE_FALLBACKS = ["/admin/dashboard", "/admin/managers", "/admin/goals"];
 const asyncHandler = (fn) => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch((err) => {
     console.error(err);
@@ -21,6 +19,74 @@ const asyncHandler = (fn) => (req, res, next) =>
     const fallback = SAFE_FALLBACKS.find((p) => referer.includes(p)) || "/admin/managers";
     res.redirect(fallback);
   });
+
+
+// Dashboard — panorama do período
+router.get("/admin/dashboard", isAdmin, asyncHandler(async (req, res) => {
+  const { year, month } = parsePeriod(req.query);
+
+  const [goals, totalManagers] = await Promise.all([
+    Goal.find({ year, month }).populate("managerId"),
+    require("../models/Manager").countDocuments(),
+  ]);
+
+  const total      = goals.length;
+  const preenchidas = goals.filter(g => g.status === "PREENCHIDO").length;
+  const pendentes  = total - preenchidas;
+
+  // Agrupamento por gestor
+  const managerMap = {};
+  goals.forEach(g => {
+    const id = g.managerId?._id?.toString() || "sem-gestor";
+    if (!managerMap[id]) {
+      managerMap[id] = {
+        id,
+        name:        g.managerId?.name        || "Sem gestor",
+        departments: (g.managerId?.departments || []).join(", ") || g.managerId?.department || "—",
+        units:       (g.managerId?.units       || []).join(", ") || "—",
+        total: 0, preenchidas: 0, pendentes: 0,
+      };
+    }
+    managerMap[id].total++;
+    if (g.status === "PREENCHIDO") managerMap[id].preenchidas++;
+    else managerMap[id].pendentes++;
+  });
+  const byManager = Object.values(managerMap).sort((a, b) => a.name.localeCompare(b.name));
+
+  // Agrupamento por unidade
+  const unitMap = {};
+  goals.forEach(g => {
+    const key = g.businessUnit || "";
+    if (!unitMap[key]) unitMap[key] = { unit: key, total: 0, preenchidas: 0 };
+    unitMap[key].total++;
+    if (g.status === "PREENCHIDO") unitMap[key].preenchidas++;
+  });
+  const byUnit = Object.values(unitMap).sort((a, b) => a.unit.localeCompare(b.unit));
+
+  // Agrupamento por departamento
+  const deptMap = {};
+  goals.forEach(g => {
+    const key = g.department || "";
+    if (!deptMap[key]) deptMap[key] = { department: key, total: 0, preenchidas: 0 };
+    deptMap[key].total++;
+    if (g.status === "PREENCHIDO") deptMap[key].preenchidas++;
+  });
+  const byDepartment = Object.values(deptMap).sort((a, b) => a.department.localeCompare(b.department));
+
+  res.render("admin/dashboard", {
+    year, month, total, preenchidas, pendentes,
+    totalManagers, byManager, byUnit, byDepartment,
+    pageTitle: "Dashboard",
+    currentPath: "/admin/dashboard",
+    showSidebar: true,
+    breadcrumbs: [
+      { label: "Admin", href: "/admin/dashboard" },
+      { label: "Dashboard" },
+    ],
+    topbarMeta: "Admin",
+  });
+}));
+
 
 // Lista gestores
 router.get("/admin/managers", isAdmin, asyncHandler(async (req, res) => {
