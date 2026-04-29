@@ -1,6 +1,5 @@
 require("dotenv").config();
 
-// Validação de variáveis de ambiente obrigatórias
 const REQUIRED_ENV = ["SESSION_SECRET", "MONGO_URI"];
 for (const key of REQUIRED_ENV) {
   if (!process.env[key]) {
@@ -16,13 +15,21 @@ const path = require("path");
 const session = require("express-session");
 const MongoStore = require("connect-mongo");
 const flash = require("connect-flash");
-const Manager = require("./models/Manager");
+const helmet = require("helmet");
+const csrf = require("./middleware/csrf");
 
 const adminGoals = require("./routes/adminGoals");
 const managerFill = require("./routes/managerFill");
 const authRoutes = require("./routes/auth");
 
 const app = express();
+
+// Segurança: headers HTTP
+app.use(
+  helmet({
+    contentSecurityPolicy: false, // desabilitar CSP aqui evita conflito com EJS inline scripts; ativar depois com config adequada
+  })
+);
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -33,23 +40,23 @@ app.set("layout", "layouts/app");
 app.use(expressLayouts);
 app.use(express.static(path.join(__dirname, "public")));
 
-// Configuração de Sessão e Flash Messages
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 1000 * 60 * 60 * 24 }, // 1 dia
+    cookie: { maxAge: 1000 * 60 * 60 * 24, httpOnly: true, sameSite: "lax" },
     store: MongoStore.create({
       mongoUrl: process.env.MONGO_URI,
       collectionName: "sessions",
-      ttl: 60 * 60 * 24, // 1 dia em segundos
+      ttl: 60 * 60 * 24,
     }),
   })
 );
+
 app.use(flash());
 
-// Middleware para disponibilizar variáveis globais nas views
+// Variáveis globais para as views
 app.use((req, res, next) => {
   res.locals.success_msg = req.flash("success_msg");
   res.locals.error_msg = req.flash("error_msg");
@@ -57,6 +64,9 @@ app.use((req, res, next) => {
   res.locals.user = req.session.user || null;
   next();
 });
+
+// Proteção CSRF (após session e flash, antes das rotas)
+app.use(csrf);
 
 app.use(adminGoals);
 app.use(managerFill);
