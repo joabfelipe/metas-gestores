@@ -18,7 +18,7 @@ const loginLimiter = rateLimit({
 // Render Login Page
 router.get("/login", (req, res) => {
   if (req.session.user) {
-    const dest = req.session.user.role === "admin" ? "/admin/managers" : "/manager/dashboard";
+    const dest = req.session.user.role === "admin" ? "/admin/dashboard" : "/manager/dashboard";
     return res.redirect(dest);
   }
   res.render("auth/login", { layout: "layouts/auth" });
@@ -70,7 +70,7 @@ router.post("/login", loginLimiter, async (req, res) => {
       }
 
       req.flash("success_msg", "Login realizado com sucesso!");
-      const destination = manager.isAdmin ? "/admin/managers" : "/manager/dashboard";
+      const destination = manager.isAdmin ? "/admin/dashboard" : "/manager/dashboard";
       res.redirect(destination);
     });
   } catch (err) {
@@ -119,7 +119,7 @@ router.post("/change-password", async (req, res) => {
 
     req.session.user.mustChangePassword = false;
     req.flash("success_msg", "Senha alterada com sucesso!");
-    const dest = req.session.user.role === "admin" ? "/admin/managers" : "/manager/dashboard";
+    const dest = req.session.user.role === "admin" ? "/admin/dashboard" : "/manager/dashboard";
     res.redirect(dest);
   } catch (err) {
     console.error(err);
