@@ -1,7 +1,19 @@
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
+const rateLimit = require("express-rate-limit");
 const Manager = require("../models/Manager");
+
+// Rate limiting: máximo 10 tentativas de login por IP a cada 15 minutos
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  handler: (req, res) => {
+    req.flash("error_msg", "Muitas tentativas de login. Aguarde 15 minutos e tente novamente.");
+    res.redirect("/login");
+  },
+  skipSuccessfulRequests: true,
+});
 
 // Render Login Page
 router.get("/login", (req, res) => {
@@ -13,7 +25,7 @@ router.get("/login", (req, res) => {
 });
 
 // Handle Login
-router.post("/login", async (req, res) => {
+router.post("/login", loginLimiter, async (req, res) => {
   const { email, password } = req.body;
 
   try {
@@ -24,8 +36,8 @@ router.post("/login", async (req, res) => {
     }
 
     if (!manager.password) {
-        req.flash("error_msg", "Sua conta ainda não possui senha. Contate o administrador.");
-        return res.redirect("/login");
+      req.flash("error_msg", "Sua conta ainda não possui senha. Contate o administrador.");
+      return res.redirect("/login");
     }
 
     const isMatch = await bcrypt.compare(password, manager.password);
@@ -34,23 +46,33 @@ router.post("/login", async (req, res) => {
       return res.redirect("/login");
     }
 
-    // Login successful
-    req.session.user = {
+    const userData = {
       id: manager._id,
       name: manager.name,
       email: manager.email,
       role: manager.isAdmin ? "admin" : "manager",
-      mustChangePassword: manager.mustChangePassword
+      mustChangePassword: manager.mustChangePassword,
     };
 
-    if (manager.mustChangePassword) {
-      req.flash("success_msg", "Por favor, altere sua senha no primeiro acesso.");
-      return res.redirect("/change-password");
-    }
+    // Correção: regenerar session ID após login para prevenir session fixation
+    req.session.regenerate((err) => {
+      if (err) {
+        console.error("Erro ao regenerar sessão:", err);
+        req.flash("error_msg", "Erro ao realizar login. Tente novamente.");
+        return res.redirect("/login");
+      }
 
-    req.flash("success_msg", "Login realizado com sucesso!");
-    const destination = manager.isAdmin ? "/admin/managers" : "/manager/dashboard";
-    res.redirect(destination);
+      req.session.user = userData;
+
+      if (manager.mustChangePassword) {
+        req.flash("success_msg", "Por favor, altere sua senha no primeiro acesso.");
+        return res.redirect("/change-password");
+      }
+
+      req.flash("success_msg", "Login realizado com sucesso!");
+      const destination = manager.isAdmin ? "/admin/managers" : "/manager/dashboard";
+      res.redirect(destination);
+    });
   } catch (err) {
     console.error(err);
     req.flash("error_msg", "Erro ao realizar login.");
@@ -74,8 +96,14 @@ router.get("/change-password", (req, res) => {
 // Handle Change Password
 router.post("/change-password", async (req, res) => {
   if (!req.session.user) return res.redirect("/login");
-  
+
   const { password, confirmPassword } = req.body;
+
+  // Validação de tamanho mínimo de senha
+  if (!password || password.length < 8) {
+    req.flash("error_msg", "A senha deve ter no mínimo 8 caracteres.");
+    return res.redirect("/change-password");
+  }
 
   if (password !== confirmPassword) {
     req.flash("error_msg", "As senhas não coincidem.");
@@ -86,7 +114,7 @@ router.post("/change-password", async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     await Manager.findByIdAndUpdate(req.session.user.id, {
       password: hashedPassword,
-      mustChangePassword: false
+      mustChangePassword: false,
     });
 
     req.session.user.mustChangePassword = false;

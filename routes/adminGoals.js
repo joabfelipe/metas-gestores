@@ -9,12 +9,16 @@ const parsePeriod = require("../utils/parsePeriod");
 
 const router = express.Router();
 
+// Rotas internas permitidas como fallback de redirecionamento
+const SAFE_FALLBACKS = ["/admin/managers", "/admin/goals"];
+
 // Wrapper para capturar erros em rotas async sem repetir try/catch
 const asyncHandler = (fn) => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch((err) => {
     console.error(err);
     req.flash("error_msg", "Ocorreu um erro inesperado. Tente novamente.");
-    const fallback = req.headers.referer && !req.headers.referer.endsWith("/back") ? req.headers.referer : "/admin/managers";
+    const referer = req.headers.referer || "";
+    const fallback = SAFE_FALLBACKS.find((p) => referer.includes(p)) || "/admin/managers";
     res.redirect(fallback);
   });
 
@@ -67,7 +71,6 @@ router.post("/admin/managers/:id/delete", isAdmin, asyncHandler(async (req, res)
 
 // Lista metas com filtros
 router.get("/admin/goals", isAdmin, asyncHandler(async (req, res) => {
-  const now = new Date();
   const { year, month } = parsePeriod(req.query);
 
   const managerId = req.query.managerId || "";
@@ -116,7 +119,6 @@ router.get("/admin/goals", isAdmin, asyncHandler(async (req, res) => {
 
 // Exporta metas para CSV
 router.get("/admin/goals/export", isAdmin, asyncHandler(async (req, res) => {
-  const now = new Date();
   const { year, month } = parsePeriod(req.query);
 
   const managerId = req.query.managerId || "";
@@ -213,7 +215,7 @@ router.post("/admin/goals/:id/update", isAdmin, asyncHandler(async (req, res) =>
   res.redirect("/admin/goals");
 }));
 
-// Atualizacao em lote (AJAX)
+// Atualizacao em lote (AJAX) — token CSRF lido do header x-csrf-token
 router.post("/admin/goals/batch-update", isAdmin, express.json(), asyncHandler(async (req, res) => {
   const { updates } = req.body;
   if (!updates || !Array.isArray(updates)) {
