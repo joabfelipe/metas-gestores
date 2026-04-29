@@ -1,0 +1,128 @@
+<section class="space-y-6">
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <h2 class="text-xl font-semibold">Novo gestor</h2>
+        <p class="text-sm text-muted">Cadastre gestores para gerar links de preenchimento.</p>
+      </div>
+      <%- include("../partials/components/button", { href: "/admin/goals", label: "Ver metas", variant: "btn-secondary", size: "btn-xs" }) %>
+    </div>
+    <div class="card-body">
+      <form action="/admin/managers" method="post" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <input type="hidden" name="_csrf" value="<%= _csrf %>">
+        <%- include("../partials/components/input", { label: "Nome", name: "name", placeholder: "Nome do gestor", required: true }) %>
+        <%- include("../partials/components/input", { label: "Email", name: "email", type: "email", placeholder: "Email corporativo", required: true }) %>
+        <%- include("../partials/components/input", { label: "Departamentos (separados por vírgula)", name: "department", placeholder: "Ex: Vendas, Marketing", required: true }) %>
+        <%- include("../partials/components/input", { label: "Unidades (separadas por vírgula)", name: "unit", placeholder: "Ex: Centro, Shopping", required: false }) %>
+        <div class="flex items-end">
+          <%- include("../partials/components/button", { type: "submit", label: "Cadastrar", variant: "btn-primary" }) %>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <h3 class="card-title">Lista de gestores</h3>
+        <p class="text-sm text-muted">Gerencie contatos e gere links por período.</p>
+      </div>
+      <%- include("../partials/components/button", { href: "/admin/goals", label: "Gerenciar metas", variant: "btn-ghost", size: "btn-xs" }) %>
+    </div>
+    <div class="card-body">
+      <% if (managers.length === 0) { %>
+        <div class="empty-state">
+          <div class="text-4xl">📋</div>
+          <div class="text-sm font-semibold">Nenhum gestor cadastrado</div>
+          <div class="text-sm text-muted">Adicione o primeiro gestor para iniciar o acompanhamento.</div>
+        </div>
+      <% } else { %>
+        <div class="table-wrap" style="overflow-x: auto;">
+          <table class="table table-card" style="min-width: 100%;">
+            <thead>
+              <tr>
+                <th>Departamentos</th>
+                <th>Unidade</th>
+                <th>Nome</th>
+                <th>Email</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% managers.forEach(m => { %>
+                <tr id="row-<%= m._id %>">
+                  <td style="display:none">
+                    <form id="update-<%= m._id %>" action="/admin/managers/<%= m._id %>/update" method="post">
+                      <input type="hidden" name="_csrf" value="<%= _csrf %>">
+                    </form>
+                  </td>
+                  <td data-label="Departamentos">
+                    <span class="view-mode"><%= m.departments ? m.departments.join(', ') : (m.department || '-') %></span>
+                    <input name="department" value="<%= m.departments ? m.departments.join(', ') : (m.department || '') %>" form="update-<%= m._id %>" class="input hidden edit-mode min-w-[150px]" required />
+                  </td>
+                  <td data-label="Unidade">
+                    <span class="view-mode"><%= m.units && m.units.length ? m.units.join(', ') : '-' %></span>
+                    <input name="unit" value="<%= m.units ? m.units.join(', ') : '' %>" form="update-<%= m._id %>" class="input hidden edit-mode w-40" placeholder="Ex: Centro, Shopping" />
+                  </td>
+                  <td data-label="Nome">
+                    <span class="view-mode"><%= m.name %></span>
+                    <input name="name" value="<%= m.name %>" form="update-<%= m._id %>" class="input hidden edit-mode min-w-[200px]" required />
+                  </td>
+                  <td data-label="Email">
+                    <span class="view-mode"><%= m.email %></span>
+                    <input type="email" name="email" value="<%= m.email %>" form="update-<%= m._id %>" class="input hidden edit-mode min-w-[250px]" required />
+                  </td>
+                  <td data-label="Ações">
+                    <div class="flex flex-wrap gap-2 items-center">
+                      <button type="button" onclick="toggleEdit('<%= m._id %>')" class="btn btn-ghost btn-xs view-mode">Editar</button>
+                      
+                      <button type="submit" form="update-<%= m._id %>" class="btn btn-success btn-xs hidden edit-mode">Salvar</button>
+                      <button type="button" onclick="toggleEdit('<%= m._id %>')" class="btn btn-ghost btn-xs hidden edit-mode">Cancelar</button>
+                      
+                      <div class="view-mode flex items-center gap-2">
+                        <form action="/admin/managers/<%= m._id %>/link" method="get" class="flex items-center gap-2 border-l pl-2 ml-2">
+                          <input name="year" value="2026" class="input w-16 px-1 text-center" placeholder="Ano"/>
+                          <input name="month" value="1" class="input w-12 px-1 text-center" placeholder="Mês"/>
+                          <button type="submit" class="btn btn-secondary btn-xs">Link</button>
+                        </form>
+
+                        <form action="/admin/managers/<%= m._id %>/generate-credentials" method="post" onsubmit="return confirm('Isso irá gerar uma nova senha para o gestor. Deseja continuar?');" class="inline-block ml-2">
+                          <input type="hidden" name="_csrf" value="<%= _csrf %>">
+                          <button type="submit" class="text-yellow-600 hover:text-yellow-800 p-1" title="Gerar nova senha">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                            </svg>
+                          </button>
+                        </form>
+
+                        <form action="/admin/managers/<%= m._id %>/delete" method="post" onsubmit="return confirm('Tem certeza que deseja excluir este gestor e todas as suas metas?');">
+                          <input type="hidden" name="_csrf" value="<%= _csrf %>">
+                          <button type="submit" class="text-red-500 hover:text-red-700 p-1" title="Excluir">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<script>
+function toggleEdit(id) {
+  const row = document.getElementById('row-' + id);
+  const viewModes = row.querySelectorAll('.view-mode');
+  const editModes = row.querySelectorAll('.edit-mode');
+  
+  viewModes.forEach(el => el.classList.toggle('hidden'));
+  editModes.forEach(el => el.classList.toggle('hidden'));
+}
+</script>
