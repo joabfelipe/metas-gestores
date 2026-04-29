@@ -14,6 +14,15 @@
   </div>
 
   <nav class="sidebar-nav">
+    <a class="sidebar-link <%= currentPath === '/admin/dashboard' ? 'sidebar-link-active' : '' %>" href="/admin/dashboard">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="3" y="3" width="7" height="7" rx="1"/>
+        <rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/>
+        <rect x="14" y="14" width="7" height="7" rx="1"/>
+      </svg>
+      Dashboard
+    </a>
     <a class="sidebar-link <%= currentPath === '/admin/managers' ? 'sidebar-link-active' : '' %>" href="/admin/managers">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
