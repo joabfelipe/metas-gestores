@@ -1,0 +1,180 @@
+<section class="space-y-6">
+
+  <%
+    const pct = total > 0 ? Math.round((preenchidas / total) * 100) : 0;
+    const MONTH_NAMES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+    const monthLabel = MONTH_NAMES[month - 1] + " " + year;
+  %>
+
+  <!-- Filtro de período -->
+  <div class="card">
+    <div class="card-body" style="padding: 14px 22px;">
+      <form method="get" action="/admin/dashboard" style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+        <span style="font-size:11px; color:var(--text-muted); letter-spacing:.08em; text-transform:uppercase;">Período</span>
+        <input type="month" name="period" value="<%= year %>-<%= String(month).padStart(2,'0') %>" class="input" style="width:auto;" data-picker="month" data-auto-submit="true" />
+        <span style="margin-left:auto; font-size:11px; color:var(--text-muted);"><%= totalManagers %> gestor<%= totalManagers !== 1 ? 'es' : '' %> cadastrado<%= totalManagers !== 1 ? 's' : '' %></span>
+      </form>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:16px;">
+
+    <div class="card" style="padding:20px 22px;">
+      <div style="font-size:10px; color:var(--text-muted); letter-spacing:.1em; text-transform:uppercase; margin-bottom:10px;">Total de metas</div>
+      <div style="font-size:32px; font-family:'Syne',sans-serif; font-weight:700; color:var(--foreground); line-height:1;"><%= total %></div>
+      <div style="font-size:11px; color:var(--text-muted); margin-top:6px;"><%= monthLabel %></div>
+    </div>
+
+    <div class="card" style="padding:20px 22px;">
+      <div style="font-size:10px; color:var(--text-muted); letter-spacing:.1em; text-transform:uppercase; margin-bottom:10px;">Preenchidas</div>
+      <div style="font-size:32px; font-family:'Syne',sans-serif; font-weight:700; color:rgb(var(--color-success)); line-height:1;"><%= preenchidas %></div>
+      <div style="font-size:11px; color:var(--text-muted); margin-top:6px;">de <%= total %> metas</div>
+    </div>
+
+    <div class="card" style="padding:20px 22px;">
+      <div style="font-size:10px; color:var(--text-muted); letter-spacing:.1em; text-transform:uppercase; margin-bottom:10px;">Pendentes</div>
+      <div style="font-size:32px; font-family:'Syne',sans-serif; font-weight:700; color:rgb(var(--color-warning)); line-height:1;"><%= pendentes %></div>
+      <div style="font-size:11px; color:var(--text-muted); margin-top:6px;">aguardando preenchimento</div>
+    </div>
+
+    <div class="card" style="padding:20px 22px; position:relative; overflow:hidden;">
+      <div style="font-size:10px; color:var(--text-muted); letter-spacing:.1em; text-transform:uppercase; margin-bottom:10px;">Conclusão</div>
+      <div style="font-size:32px; font-family:'Syne',sans-serif; font-weight:700; line-height:1;
+        color:<%= pct >= 80 ? 'rgb(var(--color-success))' : pct >= 40 ? 'rgb(var(--color-warning))' : 'rgb(var(--color-danger))' %>;">
+        <%= pct %>%
+      </div>
+      <div style="margin-top:10px; height:3px; background:rgba(255,255,255,0.06); border-radius:2px; overflow:hidden;">
+        <div style="height:100%; width:<%= pct %>%; border-radius:2px;
+          background:<%= pct >= 80 ? 'rgb(var(--color-success))' : pct >= 40 ? 'rgb(var(--color-warning))' : 'rgb(var(--color-danger))' %>;
+          transition:width .4s ease;"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Por Unidade + Por Departamento -->
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Por unidade</div>
+      </div>
+      <div class="card-body" style="padding:0;">
+        <% if (byUnit.length === 0) { %>
+          <div style="padding:24px; text-align:center; color:var(--text-muted); font-size:12px;">Nenhum dado</div>
+        <% } else { %>
+          <% byUnit.forEach((u, i) => { %>
+            <%
+              const upct = u.total > 0 ? Math.round((u.preenchidas / u.total) * 100) : 0;
+              const ucolor = upct >= 80 ? 'rgb(var(--color-success))' : upct >= 40 ? 'rgb(var(--color-warning))' : 'rgb(var(--color-danger))';
+            %>
+            <div style="padding:14px 22px; border-bottom:<%= i < byUnit.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' %>;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:7px;">
+                <span style="font-size:12px; color:var(--foreground); font-weight:500;"><%= u.unit || 'Sem unidade' %></span>
+                <span style="font-size:11px; font-family:'DM Mono',monospace; color:<%= ucolor %>;">
+                  <%= u.preenchidas %>/<%= u.total %>
+                  <span style="color:var(--text-muted); margin-left:4px;"><%= upct %>%</span>
+                </span>
+              </div>
+              <div style="height:3px; background:rgba(255,255,255,0.06); border-radius:2px; overflow:hidden;">
+                <div style="height:100%; width:<%= upct %>%; background:<%= ucolor %>; transition:width .4s ease;"></div>
+              </div>
+            </div>
+          <% }) %>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Por departamento</div>
+      </div>
+      <div class="card-body" style="padding:0;">
+        <% if (byDepartment.length === 0) { %>
+          <div style="padding:24px; text-align:center; color:var(--text-muted); font-size:12px;">Nenhum dado</div>
+        <% } else { %>
+          <% byDepartment.forEach((d, i) => { %>
+            <%
+              const dpct = d.total > 0 ? Math.round((d.preenchidas / d.total) * 100) : 0;
+              const dcolor = dpct >= 80 ? 'rgb(var(--color-success))' : dpct >= 40 ? 'rgb(var(--color-warning))' : 'rgb(var(--color-danger))';
+            %>
+            <div style="padding:14px 22px; border-bottom:<%= i < byDepartment.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' %>;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:7px;">
+                <span style="font-size:12px; color:var(--foreground); font-weight:500;"><%= d.department || 'Sem departamento' %></span>
+                <span style="font-size:11px; font-family:'DM Mono',monospace; color:<%= dcolor %>;">
+                  <%= d.preenchidas %>/<%= d.total %>
+                  <span style="color:var(--text-muted); margin-left:4px;"><%= dpct %>%</span>
+                </span>
+              </div>
+              <div style="height:3px; background:rgba(255,255,255,0.06); border-radius:2px; overflow:hidden;">
+                <div style="height:100%; width:<%= dpct %>%; background:<%= dcolor %>; transition:width .4s ease;"></div>
+              </div>
+            </div>
+          <% }) %>
+        <% } %>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Por Gestor -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Por gestor</div>
+      <%- include("../partials/components/button", { href: "/admin/goals?year=" + year + "&month=" + month, label: "Ver todas as metas", variant: "btn-ghost", size: "btn-xs" }) %>
+    </div>
+    <div class="card-body" style="padding:0;">
+      <% if (byManager.length === 0) { %>
+        <div class="empty-state">
+          <div style="font-size:11px;">Nenhuma meta cadastrada para este período.</div>
+        </div>
+      <% } else { %>
+        <div class="table-wrap">
+          <table class="table" style="min-width:100%;">
+            <thead>
+              <tr>
+                <th>Gestor</th>
+                <th>Departamentos</th>
+                <th>Unidades</th>
+                <th style="text-align:center;">Total</th>
+                <th style="text-align:center;">Preenchidas</th>
+                <th style="text-align:center;">Pendentes</th>
+                <th style="min-width:160px;">Progresso</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% byManager.forEach(m => { %>
+                <%
+                  const mpct = m.total > 0 ? Math.round((m.preenchidas / m.total) * 100) : 0;
+                  const mcolor = mpct >= 80 ? 'rgb(var(--color-success))' : mpct >= 40 ? 'rgb(var(--color-warning))' : 'rgb(var(--color-danger))';
+                %>
+                <tr>
+                  <td style="font-weight:500;"><%= m.name %></td>
+                  <td style="color:var(--text-muted); font-size:11px;"><%= m.departments %></td>
+                  <td style="color:var(--text-muted); font-size:11px;"><%= m.units %></td>
+                  <td style="text-align:center; font-family:'DM Mono',monospace;"><%= m.total %></td>
+                  <td style="text-align:center; font-family:'DM Mono',monospace; color:rgb(var(--color-success));"><%= m.preenchidas %></td>
+                  <td style="text-align:center; font-family:'DM Mono',monospace; color:rgb(var(--color-warning));"><%= m.pendentes %></td>
+                  <td>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                      <div style="flex:1; height:4px; background:rgba(255,255,255,0.06); border-radius:2px; overflow:hidden;">
+                        <div style="height:100%; width:<%= mpct %>%; background:<%= mcolor %>; transition:width .4s ease;"></div>
+                      </div>
+                      <span style="font-size:11px; font-family:'DM Mono',monospace; color:<%= mcolor %>; min-width:34px; text-align:right;"><%= mpct %>%</span>
+                    </div>
+                  </td>
+                  <td>
+                    <a href="/admin/goals?year=<%= year %>&month=<%= month %>&managerId=<%= m.id %>" class="btn btn-ghost btn-xs">Ver</a>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+</section>
