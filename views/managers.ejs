@@ -9,7 +9,6 @@
     </div>
     <div class="card-body">
       <form action="/admin/managers" method="post" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <input type="hidden" name="_csrf" value="<%= _csrf %>">
         <%- include("../partials/components/input", { label: "Nome", name: "name", placeholder: "Nome do gestor", required: true }) %>
         <%- include("../partials/components/input", { label: "Email", name: "email", type: "email", placeholder: "Email corporativo", required: true }) %>
         <%- include("../partials/components/input", { label: "Departamentos (separados por vírgula)", name: "department", placeholder: "Ex: Vendas, Marketing", required: true }) %>
@@ -53,7 +52,6 @@
                 <tr id="row-<%= m._id %>">
                   <td style="display:none">
                     <form id="update-<%= m._id %>" action="/admin/managers/<%= m._id %>/update" method="post">
-                      <input type="hidden" name="_csrf" value="<%= _csrf %>">
                     </form>
                   </td>
                   <td data-label="Departamentos">
@@ -87,7 +85,6 @@
                         </form>
 
                         <form action="/admin/managers/<%= m._id %>/generate-credentials" method="post" onsubmit="return confirm('Isso irá gerar uma nova senha para o gestor. Deseja continuar?');" class="inline-block ml-2">
-                          <input type="hidden" name="_csrf" value="<%= _csrf %>">
                           <button type="submit" class="text-yellow-600 hover:text-yellow-800 p-1" title="Gerar nova senha">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
@@ -96,7 +93,6 @@
                         </form>
 
                         <form action="/admin/managers/<%= m._id %>/delete" method="post" onsubmit="return confirm('Tem certeza que deseja excluir este gestor e todas as suas metas?');">
-                          <input type="hidden" name="_csrf" value="<%= _csrf %>">
                           <button type="submit" class="text-red-500 hover:text-red-700 p-1" title="Excluir">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

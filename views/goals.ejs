@@ -31,7 +31,9 @@
           <select name="department" class="select">
             <option value="">Todos</option>
             <% availableDepartments.forEach(d => { %>
-              <option value="<%= d %>" <%= String(department)===String(d) ? "selected" : "" %>><%= d %></option>
+              <option value="<%= d %>" <%= String(department)===String(d) ? "selected" : "" %>>
+                <%= d %>
+              </option>
             <% }) %>
           </select>
         </div>
@@ -40,7 +42,9 @@
           <select name="businessUnit" class="select">
             <option value="">Todas</option>
             <% availableUnits.forEach(u => { %>
-              <option value="<%= u %>" <%= String(businessUnit)===String(u) ? "selected" : "" %>><%= u %></option>
+              <option value="<%= u %>" <%= String(businessUnit)===String(u) ? "selected" : "" %>>
+                <%= u %>
+              </option>
             <% }) %>
           </select>
         </div>
@@ -63,7 +67,6 @@
     </div>
     <div class="card-body">
       <form method="post" action="/admin/goals/replicate-advanced" class="grid gap-6 md:grid-cols-2" onsubmit="return confirm('Tem certeza que deseja replicar as metas selecionadas?');">
-        <input type="hidden" name="_csrf" value="<%= _csrf %>">
         <!-- Origem -->
         <div class="space-y-4 border p-4 rounded bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700">
           <h4 class="font-medium text-xs uppercase tracking-wider text-gray-500 mb-4 flex items-center gap-2">
@@ -159,7 +162,6 @@
       </div>
       <div class="flex gap-2">
         <form method="post" action="/admin/goals/replicate" onsubmit="return confirm('Isso irá copiar as metas do mês anterior para o mês atual (apenas as que ainda não existem). Continuar?');">
-            <input type="hidden" name="_csrf" value="<%= _csrf %>">
             <input type="hidden" name="period" value="<%= year %>-<%= String(month).padStart(2, '0') %>">
             <input type="hidden" name="managerId" value="<%= managerId %>">
             <%- include("../partials/components/button", { type: "submit", label: "Replicar mês anterior", variant: "btn-secondary", size: "btn-xs" }) %>
@@ -168,7 +170,6 @@
     </div>
     <div class="card-body">
       <form method="post" action="/admin/goals" class="grid gap-4 lg:grid-cols-6 items-end">
-        <input type="hidden" name="_csrf" value="<%= _csrf %>">
         <div class="field lg:col-span-2">
           <label class="field-label">Período</label>
           <input type="month" name="period" value="<%= year %>-<%= String(month).padStart(2, '0') %>" class="input" data-picker="month" required />
@@ -232,7 +233,6 @@
         <div class="flex gap-2">
             <button onclick="saveAllGoals()" class="btn btn-primary btn-xs">Salvar Alterações</button>
             <form action="/admin/goals/delete-all" method="post" onsubmit="return confirm('ATENÇÃO: Isso apagará TODAS as metas listadas abaixo.\n\nTem certeza absoluta?');">
-                <input type="hidden" name="_csrf" value="<%= _csrf %>">
                 <input type="hidden" name="period" value="<%= year %>-<%= String(month).padStart(2, '0') %>">
                 <input type="hidden" name="managerId" value="<%= managerId || '' %>">
                 <%- include("../partials/components/button", { type: "submit", label: "Apagar todas as metas", variant: "btn-danger", size: "btn-xs" }) %>
@@ -268,9 +268,6 @@
               <% goals.forEach(g => { %>
                 <tr data-id="<%= g._id %>">
                   <td style="display:none">
-                    <form id="form-<%= g._id %>" method="post" action="/admin/goals/<%= g._id %>/update">
-                      <input type="hidden" name="_csrf" value="<%= _csrf %>">
-                    </form>
                   </td>
                   <td data-label="Gestor"><%= g.managerId ? g.managerId.name : '?' %></td>
                   <td data-label="Depto">
@@ -324,7 +321,6 @@
                     <div class="flex flex-wrap gap-2">
                       <button type="submit" form="form-<%= g._id %>" class="btn btn-secondary btn-xs">Salvar</button>
                       <form action="/admin/goals/<%= g._id %>/delete" method="post" onsubmit="return confirm('Excluir?');">
-                        <input type="hidden" name="_csrf" value="<%= _csrf %>">
                         <%- include("../partials/components/button", { type: "submit", label: "Excluir", variant: "btn-danger", size: "btn-xs" }) %>
                       </form>
                     </div>
@@ -342,6 +338,7 @@
     const select = document.getElementById('managerSelect');
     const selectedOption = select.options[select.selectedIndex];
     
+    // Units
     const unitsStr = selectedOption.getAttribute('data-units') || "";
     const units = unitsStr.split(',').filter(u => u.trim() !== "");
     
@@ -361,6 +358,7 @@
         unitInput.value = ""; 
     }
 
+    // Departments
     const deptsStr = selectedOption.getAttribute('data-departments') || "";
     const depts = deptsStr.split(',').filter(d => d.trim() !== "");
     
@@ -379,16 +377,17 @@
     }
   }
   
+  // Roda ao carregar se já tiver gestor selecionado
   document.addEventListener("DOMContentLoaded", () => {
       if(document.getElementById('managerSelect').value) {
           updateManagerOptions();
       }
   });
 
+
   async function saveAllGoals() {
     if(!confirm("Tem certeza que deseja salvar todas as alterações visíveis?")) return;
     
-    const csrfToken = "<%= _csrf %>";
     const updates = [];
     const rows = document.querySelectorAll('tbody tr[data-id]');
     
@@ -407,16 +406,21 @@
         const achievedValue = row.querySelector('[name="achievedValue"]').value;
         const actionPlan = row.querySelector('[name="actionPlan"]').value;
 
-        updates.push({ id, title, targetValue, unit, businessUnit, department, achievedValue, actionPlan });
+        updates.push({
+            id,
+            title,
+            targetValue,
+            unit,
+            businessUnit,
+            department,
+            achievedValue,
+            actionPlan
+        });
     });
 
     try {
         const res = await fetch('/admin/goals/batch-update', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-csrf-token': csrfToken
-            },
             body: JSON.stringify({ updates })
         });
 
