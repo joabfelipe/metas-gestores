@@ -16,7 +16,6 @@ const session = require("express-session");
 const MongoStore = require("connect-mongo");
 const flash = require("connect-flash");
 const helmet = require("helmet");
-const csrf = require("./middleware/csrf");
 
 const adminGoals = require("./routes/adminGoals");
 const managerFill = require("./routes/managerFill");
@@ -24,12 +23,7 @@ const authRoutes = require("./routes/auth");
 
 const app = express();
 
-// Segurança: headers HTTP
-app.use(
-  helmet({
-    contentSecurityPolicy: false, // desabilitar CSP aqui evita conflito com EJS inline scripts; ativar depois com config adequada
-  })
-);
+app.use(helmet({ contentSecurityPolicy: false }));
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -45,7 +39,11 @@ app.use(
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 1000 * 60 * 60 * 24, httpOnly: true, sameSite: "lax" },
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 24,
+      httpOnly: true,
+      sameSite: "lax",   // já bloqueia CSRF cross-origin
+    },
     store: MongoStore.create({
       mongoUrl: process.env.MONGO_URI,
       collectionName: "sessions",
@@ -56,23 +54,19 @@ app.use(
 
 app.use(flash());
 
-// Variáveis globais para as views
 app.use((req, res, next) => {
   res.locals.success_msg = req.flash("success_msg");
-  res.locals.error_msg = req.flash("error_msg");
-  res.locals.error = req.flash("error");
-  res.locals.user = req.session.user || null;
+  res.locals.error_msg   = req.flash("error_msg");
+  res.locals.error       = req.flash("error");
+  res.locals.user        = req.session.user || null;
   next();
 });
-
-// Proteção CSRF (após session e flash, antes das rotas)
-app.use(csrf);
 
 app.use(adminGoals);
 app.use(managerFill);
 app.use(authRoutes);
 
-app.get("/", (req, res) => res.redirect("/admin/managers"));
+app.get("/", (req, res) => res.redirect("/admin/dashboard"));
 
 mongoose
   .connect(process.env.MONGO_URI)
