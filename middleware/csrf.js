@@ -9,12 +9,6 @@ const SAFE_ORIGINS = [
   "/g/",
 ];
 
-/**
- * Gera um token CSRF determinístico: HMAC-SHA256(sessionID, SESSION_SECRET).
- * Não precisa ser salvo na sessão — é recalculado a cada request a partir
- * do session ID (que já está no cookie do usuário) e do secret do servidor.
- * Isso elimina qualquer problema de timing com o MongoStore.
- */
 function generateToken(sessionId) {
   return crypto
     .createHmac("sha256", process.env.SESSION_SECRET)
@@ -31,6 +25,16 @@ module.exports = function csrfMiddleware(req, res, next) {
       req.headers["x-csrf-token"];
 
     const expected = generateToken(req.sessionID);
+
+    // Debug temporário — remover após confirmar que parou de falhar
+    console.log("[CSRF DEBUG]", {
+      url:       req.originalUrl,
+      sessionID: req.sessionID?.slice(0, 12) + "...",
+      submitted: submitted?.slice(0, 12) + "...",
+      expected:  expected?.slice(0, 12) + "...",
+      match:     submitted === expected,
+      bodyKeys:  Object.keys(req.body || {}),
+    });
 
     if (!submitted || submitted !== expected) {
       req.flash("error_msg", "Requisição inválida ou expirada. Tente novamente.");
