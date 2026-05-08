@@ -18,11 +18,13 @@ const flash = require("connect-flash");
 const helmet = require("helmet");
 
 const adminGoals = require("./routes/adminGoals");
+const adminTemplates = require("./routes/adminTemplates");
 const managerFill = require("./routes/managerFill");
 const authRoutes = require("./routes/auth");
 
 const app = express();
 
+app.set("trust proxy", 1); // Render usa proxy reverso
 app.use(helmet({ contentSecurityPolicy: false }));
 
 app.use(express.urlencoded({ extended: true }));
@@ -42,7 +44,7 @@ app.use(
     cookie: {
       maxAge: 1000 * 60 * 60 * 24,
       httpOnly: true,
-      sameSite: "lax",   // já bloqueia CSRF cross-origin
+      sameSite: "lax",
     },
     store: MongoStore.create({
       mongoUrl: process.env.MONGO_URI,
@@ -56,13 +58,14 @@ app.use(flash());
 
 app.use((req, res, next) => {
   res.locals.success_msg = req.flash("success_msg");
-  res.locals.error_msg   = req.flash("error_msg");
-  res.locals.error       = req.flash("error");
-  res.locals.user        = req.session.user || null;
+  res.locals.error_msg = req.flash("error_msg");
+  res.locals.error = req.flash("error");
+  res.locals.user = req.session.user || null;
   next();
 });
 
 app.use(adminGoals);
+app.use(adminTemplates);
 app.use(managerFill);
 app.use(authRoutes);
 
