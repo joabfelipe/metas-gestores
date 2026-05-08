@@ -2,13 +2,17 @@ const mongoose = require("mongoose");
 
 const GoalSchema = new mongoose.Schema(
   {
+    // Vínculo com o template que originou esta meta (opcional para compatibilidade
+    // com metas criadas antes da introdução de templates).
+    templateId: { type: mongoose.Schema.Types.ObjectId, ref: "GoalTemplate", default: null },
+
     managerId: { type: mongoose.Schema.Types.ObjectId, ref: "Manager", required: true },
     year: { type: Number, required: true },
     month: { type: Number, required: true }, // 1-12
 
     title: { type: String, required: true },
-    department: { type: String, default: "" }, // Departamento da meta
-    businessUnit: { type: String, default: "" }, // Unidade Física (ex: Matriz, Filial X)
+    department: { type: String, default: "" },
+    businessUnit: { type: String, default: "" },
     targetValue: { type: Number, required: true },
     unit: { type: String, default: "%" },
 
@@ -20,6 +24,9 @@ const GoalSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-GoalSchema.index({ managerId: 1, year: 1, month: 1, title: 1, businessUnit: 1 }, { unique: true });
+GoalSchema.index(
+  { managerId: 1, year: 1, month: 1, title: 1, businessUnit: 1 },
+  { unique: true }
+);
 
 module.exports = mongoose.model("Goal", GoalSchema);
