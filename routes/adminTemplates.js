@@ -11,7 +11,7 @@ const asyncHandler = (fn) => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch((err) => {
     console.error(err);
     req.flash("error_msg", "Ocorreu um erro inesperado. Tente novamente.");
-    res.redirect("/admin/templates");
+    res.redirect("/admin/dashboard");
   });
 
 /**
@@ -197,7 +197,7 @@ router.post(
     await syncTemplateGoals(template);
 
     req.flash("success_msg", "Modelo criado e metas geradas com sucesso.");
-    res.redirect("/admin/templates");
+    res.redirect("/admin/dashboard");
   })
 );
 
@@ -209,7 +209,7 @@ router.get(
     const template = await GoalTemplate.findById(req.params.id);
     if (!template) {
       req.flash("error_msg", "Modelo não encontrado.");
-      return res.redirect("/admin/templates");
+      return res.redirect("/admin/dashboard");
     }
 
     const managers = await Manager.find({ isAdmin: { $ne: true } }).sort({ name: 1 });
@@ -264,7 +264,7 @@ router.post(
     const template = await GoalTemplate.findById(req.params.id);
     if (!template) {
       req.flash("error_msg", "Modelo não encontrado.");
-      return res.redirect("/admin/templates");
+      return res.redirect("/admin/dashboard");
     }
 
     const { title, department, targetValue, unit, validFrom, validUntil } = req.body;
@@ -295,7 +295,7 @@ router.post(
     await syncTemplateGoals(template);
 
     req.flash("success_msg", "Modelo atualizado e metas sincronizadas.");
-    res.redirect("/admin/templates");
+    res.redirect("/admin/dashboard");
   })
 );
 
@@ -307,7 +307,7 @@ router.post(
     const template = await GoalTemplate.findById(req.params.id);
     if (!template) {
       req.flash("error_msg", "Modelo não encontrado.");
-      return res.redirect("/admin/templates");
+      return res.redirect("/admin/dashboard");
     }
 
     // Remove apenas os Goals ainda não preenchidos (preserva histórico)
@@ -322,7 +322,7 @@ router.post(
       "success_msg",
       "Modelo removido. Metas já preenchidas foram preservadas como histórico."
     );
-    res.redirect("/admin/templates");
+    res.redirect("/admin/dashboard");
   })
 );
 
